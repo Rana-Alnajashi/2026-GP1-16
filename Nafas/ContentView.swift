@@ -13,12 +13,15 @@ struct ContentView: View {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Hello")
+            Text("say_welcome")
+                .appFont(size: 30)
+
         }
         .padding()
     }
 }
 
-#Preview {
+#Preview("Arabic"){
     ContentView()
+        .environment(\.locale, .init(identifier: "ar"))
 }
