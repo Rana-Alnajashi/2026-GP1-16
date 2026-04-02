@@ -6,27 +6,30 @@
 //
 
 import SwiftUI
+
 struct RootView: View {
-    @State private var showSignInView: Bool = false
+    @State private var showSignInView: Bool = true
     
+    // Global settings for your new menu features
+    @AppStorage("nafas_dark_mode") private var darkMode = false
+    @AppStorage("nafas_language") private var language = "English"
+
     var body: some View {
         ZStack {
-            if !showSignInView {
-                // The view the user sees when LOGGED IN
+            if showSignInView {
+                AuthenticationView(showSignInView: $showSignInView)
+            } else {
                 NavigationStack {
-                    SettingsView(showSignInView: $showSignInView)
+                    HomeView(showSignInView: $showSignInView)
                 }
             }
         }
         .onAppear {
-            // Check if user is already authenticated
             let authUser = try? AuthenticationManager.shared.getAuthenticatedUser()
             self.showSignInView = authUser == nil
         }
-        .fullScreenCover(isPresented: $showSignInView) {
-            NavigationStack {
-                AuthenticationView(showSignInView: $showSignInView)
-            }
-        }
+        .preferredColorScheme(darkMode ? .dark : .light)
+        .environment(\.locale, Locale(identifier: language == "English" ? "en" : "ar"))
+        .environment(\.layoutDirection, language == "English" ? .leftToRight : .rightToLeft)
     }
 }

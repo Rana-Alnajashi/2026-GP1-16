@@ -23,6 +23,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>GIDClientID</key>
 	<string>627262073258-u2lqt1bbu5b3lfc29tjhc84ejckdlmbe.apps.googleusercontent.com</string>
 	<key>UIBackgroundModes</key>
