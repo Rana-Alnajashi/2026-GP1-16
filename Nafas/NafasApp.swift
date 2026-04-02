@@ -4,9 +4,11 @@
 //
 //  Created by Rana Alngashy on 15/03/2026.
 //
+
 import SwiftUI
 import Firebase
 import FirebaseAuth
+import UserNotifications
 
 @main
 struct NafasApp: App {
@@ -14,22 +16,24 @@ struct NafasApp: App {
    
     var body: some Scene {
         WindowGroup {
-            RootView()
+            // Change this from RootView() to SplashView()
+            SplashView()
         }
     }
 }
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
+        UNUserNotificationCenter.current().delegate = self
+        application.registerForRemoteNotifications()
         return true
     }
     
-    // ADD THESE THREE:
-    
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        Auth.auth().setAPNSToken(deviceToken, type: .unknown)
+        Auth.auth().setAPNSToken(deviceToken, type: .sandbox)
     }
 
     func application(_ application: UIApplication,
@@ -45,5 +49,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             return
         }
         completionHandler(.newData)
+    }
+
+    func application(_ app: UIApplication, open url: URL,
+                     options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        if Auth.auth().canHandle(url) {
+            return true
+        }
+        return false
     }
 }
