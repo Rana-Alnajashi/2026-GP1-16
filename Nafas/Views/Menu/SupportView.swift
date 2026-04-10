@@ -79,6 +79,9 @@ struct SupportView: View {
                     Text(value)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(Color.nafasTextPrimary)
+                        // These two lines prevent the text from wrapping to a second line
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                 }
                 
                 Spacer()
