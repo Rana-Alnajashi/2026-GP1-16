@@ -20,39 +20,61 @@ struct ChildModel: Identifiable, Codable, Equatable, Hashable {
     var condition: String?
     var avatarColor: String
     var guardianRelationship: GuardianRelationship
-    var avatarImageData: Data?  // This is Codable by default
+    var avatarImageData: Data?
     var emergencyPhoneNumbers: [String]
-    
-    
+
+    // MARK: - Gender
     enum Gender: String, Codable, CaseIterable {
-        case male = "Male"
+        // Raw values are Codable storage keys — do NOT change them.
+        case male   = "Male"
         case female = "Female"
+
+        /// Locale-aware display label — use this in all UI, never rawValue.
+        var localizedLabel: String {
+            switch self {
+            case .male:   return NSLocalizedString("gender_male",   comment: "Display label for male gender")
+            case .female: return NSLocalizedString("gender_female", comment: "Display label for female gender")
+            }
+        }
     }
-    
+
+    // MARK: - Guardian Relationship
     enum GuardianRelationship: String, Codable, CaseIterable {
-        case mother = "Mother"
-        case father = "Father"
-        case sibling = "Sibling"
+        // Raw values are Codable storage keys — do NOT change them.
+        case mother      = "Mother"
+        case father      = "Father"
+        case sibling     = "Sibling"
         case grandparent = "Grandparent"
-        case other = "Other"
+        case other       = "Other"
+
+        /// Locale-aware display label — use this in all UI, never rawValue.
+        var localizedLabel: String {
+            switch self {
+            case .mother:      return NSLocalizedString("guardian_mother",      comment: "Guardian relationship: mother")
+            case .father:      return NSLocalizedString("guardian_father",      comment: "Guardian relationship: father")
+            case .sibling:     return NSLocalizedString("guardian_sibling",     comment: "Guardian relationship: sibling")
+            case .grandparent: return NSLocalizedString("guardian_grandparent", comment: "Guardian relationship: grandparent")
+            case .other:       return NSLocalizedString("guardian_other",       comment: "Guardian relationship: other")
+            }
+        }
     }
-    
+
     var age: Int {
         let calendar = Calendar.current
         let now = Date()
         let ageComponents = calendar.dateComponents([.year], from: birthDate, to: now)
         return ageComponents.year ?? 0
     }
-    
+
     var storeKey: String {
         id.uuidString
     }
-    
+
     // MARK: - Hashable Conformance
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
+
     static func == (lhs: ChildModel, rhs: ChildModel) -> Bool {
         lhs.id == rhs.id
     }
@@ -85,9 +107,9 @@ struct HistoryEntry: Identifiable {
     var spO2: Int?
     var iaq: Int?
     var peakFlow: Int?
-    var alertLevel: AlertLevel = .danger  // Always danger for attacks
-    
-    enum AlertLevel { case danger }  // Only danger for attacks
+    var alertLevel: AlertLevel = .danger
+
+    enum AlertLevel { case danger }
 }
 
 // MARK: - Peak Flow Entry
