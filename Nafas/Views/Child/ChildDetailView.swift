@@ -18,6 +18,11 @@ struct ChildDetailView: View {
     @State private var dismissedAlerts: Set<String> = []
     @State private var menuOpen = false
     @Environment(\.dismiss) var dismiss
+    
+    // Add this property to always get the freshest data
+    private var currentChild: ChildModel {
+        store.children.first(where: { $0.id == child.id }) ?? child
+    }
 
     // Direct dictionary access ensures SwiftUI updates immediately
     private var vitals: VitalSnapshot? {
@@ -27,14 +32,14 @@ struct ChildDetailView: View {
         store.peakFlowLogs[child.id.uuidString] ?? []
     }
     private var latestPeak: PeakFlowEntry? { peakFlows.first }
-    
+
     private var spO2AlertId: String { "spo2_\(child.id)" }
     private var peakAlertId: String { "peak_\(child.id)" }
-    
+
     // True when there is an active undismissed attack-level alert
     private var hasActiveAlert: Bool {
         let spO2Alert = vitals?.spO2Status == .low && !dismissedAlerts.contains(spO2AlertId)
-        let peakAlert = vitals?.peakZone == .red && !dismissedAlerts.contains(peakAlertId)
+        let peakAlert = vitals?.peakZone == .red  && !dismissedAlerts.contains(peakAlertId)
         return spO2Alert || peakAlert
     }
 
@@ -50,7 +55,6 @@ struct ChildDetailView: View {
             }
             .navigationTitle(child.name)
             .navigationBarTitleDisplayMode(.inline)
-            // REMOVED background overrides to let the native glass effect show
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { toggleMenu() }) {
@@ -60,20 +64,18 @@ struct ChildDetailView: View {
                     }
                 }
             }
-                
+
             // Dim scrim
             if menuOpen {
                 Color.black.opacity(0.35)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                    .onTapGesture {
-                        toggleMenu()
-                    }
+                    .onTapGesture { toggleMenu() }
             }
-            
+
             // Side menu
             ChildSideMenuView(
-                child: child,
+                child: currentChild,
                 isOpen: $menuOpen,
                 onAddPeakFlow: { showAddPeakFlow = true },
                 onEditChild: { showEditChild = true },
@@ -84,20 +86,17 @@ struct ChildDetailView: View {
             .offset(x: menuOpen ? 0 : UIScreen.main.bounds.width)
             .animation(.spring(response: 0.38, dampingFraction: 0.88), value: menuOpen)
         }
-        .sheet(isPresented: $showHealthHistory) {
-            HealthHistoryView(child: child)
-        }
-        .sheet(isPresented: $showAddPeakFlow) {
-            AddPeakFlowView(child: child)
-        }
-        .sheet(isPresented: $showEditChild) {
-            EditChildView(child: child)
-        }
+        .sheet(isPresented: $showHealthHistory) { HealthHistoryView(child: currentChild) }
+        .sheet(isPresented: $showAddPeakFlow)   { AddPeakFlowView(child: currentChild) }
+        .sheet(isPresented: $showEditChild)      { EditChildView(child: currentChild) }
         .sheet(isPresented: $showBluetoothConnection) {
             BluetoothConnectionView(child: child, isNewChild: false)
         }
-        .alert(String(format: NSLocalizedString("child_delete_title", comment: ""), child.name), isPresented: $showDeleteAlert) {
-            Button(NSLocalizedString("child_delete_cancel", comment: ""), role: .cancel) { }
+        .alert(
+            String(format: NSLocalizedString("child_delete_title", comment: ""), child.name),
+            isPresented: $showDeleteAlert
+        ) {
+            Button(NSLocalizedString("child_delete_cancel",  comment: ""), role: .cancel) { }
             Button(NSLocalizedString("child_delete_confirm", comment: ""), role: .destructive) {
                 store.deleteChild(child.id.uuidString)
                 dismiss()
@@ -106,7 +105,7 @@ struct ChildDetailView: View {
             Text(LocalizedStringKey("child_delete_message"))
         }
     }
-    
+
     private func toggleMenu() {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
             menuOpen.toggle()
@@ -134,9 +133,9 @@ struct ChildDetailView: View {
                 if let v = vitals {
                     wristbandCard(lastSync: v.lastSync)
                 }
-                
+
                 // Emergency Call Card — only shown during an active undismissed attack alert
-                if hasActiveAlert && !child.emergencyPhoneNumbers.isEmpty {
+                if hasActiveAlert && !currentChild.emergencyPhoneNumbers.isEmpty {
                     emergencyCallCard
                 }
 
@@ -154,13 +153,19 @@ struct ChildDetailView: View {
                     HStack(spacing: 12) {
                         vitalCard(
                             icon: "heart.fill", iconColor: .red, iconBg: Color.red.opacity(0.12),
-                            title: NSLocalizedString("vital_blood_pressure", comment: ""), value: v.bp, unit: "mmHg",
-                            status: bpStatusLabel(v.bpStatus), statusColor: statusColor(v.bpStatus)
+                            title: NSLocalizedString("vital_blood_pressure", comment: ""),
+                            value: v.bp,
+                            unit: NSLocalizedString("mmHg", comment: ""),   // ← was "mmHg" literal
+                            status: bpStatusLabel(v.bpStatus),
+                            statusColor: statusColor(v.bpStatus)
                         )
                         vitalCard(
                             icon: "drop.fill", iconColor: Color.nafasPrimary, iconBg: Color.nafasPrimary.opacity(0.12),
-                            title: "SpO2", value: "\(v.spO2)%", unit: NSLocalizedString("vital_oxygen_unit", comment: ""),
-                            status: spO2StatusLabel(v.spO2Status), statusColor: statusColor(v.spO2Status)
+                            title: "SpO2",
+                            value: "\(v.spO2)%",
+                            unit: NSLocalizedString("vital_oxygen_unit", comment: ""),
+                            status: spO2StatusLabel(v.spO2Status),
+                            statusColor: statusColor(v.spO2Status)
                         )
                     }
                     iaqCard(v)
@@ -168,7 +173,6 @@ struct ChildDetailView: View {
                     emptyVitalsView
                 }
 
-                // Both connected and disconnected views use these dynamic blocks
                 peakFlowSection
                 todaySummarySection
 
@@ -179,12 +183,12 @@ struct ChildDetailView: View {
         }
         .background(Color.nafasBackground.ignoresSafeArea())
     }
-    
+
     // MARK: - Disconnected View
     private var disconnectedView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
-                
+
                 // Connect Wristband Button at top
                 Button {
                     showBluetoothConnection = true
@@ -199,17 +203,17 @@ struct ChildDetailView: View {
                     .frame(height: 50)
                     .background(Color.nafasPrimary, in: RoundedRectangle(cornerRadius: 12))
                 }
-                
+
                 // Live Vitals Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text(LocalizedStringKey("vital_live_vitals"))
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(Color.nafasTextPrimary)
-                    
+
                     Text(LocalizedStringKey("vital_no_device_connected"))
                         .font(.system(size: 15))
                         .foregroundStyle(Color.nafasTextMuted)
-                    
+
                     HStack(spacing: 12) {
                         // Blood Pressure Card
                         VStack(alignment: .leading, spacing: 8) {
@@ -221,26 +225,23 @@ struct ChildDetailView: View {
                                     .font(.system(size: 13))
                                     .foregroundStyle(Color.nafasTextMuted)
                             }
-                            
                             Text("---")
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(Color.nafasTextMuted)
-                            
-                            Text("mmHg")
+                            // ← was "mmHg" literal
+                            Text(NSLocalizedString("mmHg", comment: ""))
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.nafasTextMuted)
-                            
                             Text(LocalizedStringKey("disconnected_no_data"))
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(Color.nafasTextMuted)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
+                                .padding(.horizontal, 10).padding(.vertical, 4)
                                 .background(Color.gray.opacity(0.1), in: Capsule())
                         }
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
-                        
+
                         // SpO2 Card
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 8) {
@@ -251,27 +252,23 @@ struct ChildDetailView: View {
                                     .font(.system(size: 13))
                                     .foregroundStyle(Color.nafasTextMuted)
                             }
-                            
                             Text("---")
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(Color.nafasTextMuted)
-                            
                             Text(LocalizedStringKey("disconnected_spo2_unit"))
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.nafasTextMuted)
-                            
                             Text(LocalizedStringKey("disconnected_no_data"))
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(Color.nafasTextMuted)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
+                                .padding(.horizontal, 10).padding(.vertical, 4)
                                 .background(Color.gray.opacity(0.1), in: Capsule())
                         }
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
                     }
-                    
+
                     // IAQ Card
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
@@ -287,27 +284,21 @@ struct ChildDetailView: View {
                             Text(LocalizedStringKey("disconnected_no_data"))
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(Color.nafasTextMuted)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 5)
+                                .padding(.horizontal, 12).padding(.vertical, 5)
                                 .background(Color.gray.opacity(0.1), in: Capsule())
                         }
-                        
                         Text("---")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundStyle(Color.nafasTextMuted)
-                        
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.nafasDivider)
-                                    .frame(height: 8)
+                                    .fill(Color.nafasDivider).frame(height: 8)
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 0, height: 8)
+                                    .fill(Color.gray.opacity(0.3)).frame(width: 0, height: 8)
                             }
                         }
                         .frame(height: 8)
-                        
                         HStack {
                             Text(LocalizedStringKey("iaq_scale_good"))
                             Spacer()
@@ -321,11 +312,10 @@ struct ChildDetailView: View {
                     .padding(16)
                     .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
                 }
-                
-                // The disconnected view now calls the dynamic sections!
+
                 peakFlowSection
                 todaySummarySection
-                
+
                 Spacer(minLength: 40)
             }
             .padding(.horizontal, 20)
@@ -333,14 +323,14 @@ struct ChildDetailView: View {
         }
         .background(Color.nafasBackground.ignoresSafeArea())
     }
-    
+
     private var emptyVitalsView: some View {
         VStack(spacing: 16) {
             HStack(spacing: 12) {
                 emptyVitalCard(
                     icon: "heart.fill",
                     title: NSLocalizedString("disconnected_bp_title", comment: ""),
-                    unit: "mmHg"
+                    unit: NSLocalizedString("mmHg", comment: "")  // ← was "mmHg" literal
                 )
                 emptyVitalCard(
                     icon: "drop.fill",
@@ -351,7 +341,7 @@ struct ChildDetailView: View {
             emptyIAQCard()
         }
     }
-    
+
     @ViewBuilder
     private func emptyVitalCard(icon: String, title: String, unit: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -363,27 +353,23 @@ struct ChildDetailView: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color.nafasTextMuted)
             }
-            
             Text("---")
                 .font(.system(size: 28, weight: .bold))
                 .foregroundStyle(Color.nafasTextMuted)
-            
             Text(unit)
                 .font(.system(size: 12))
                 .foregroundStyle(Color.nafasTextMuted)
-            
             Text(NSLocalizedString("disconnected_no_data", comment: ""))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Color.nafasTextMuted)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 10).padding(.vertical, 4)
                 .background(Color.gray.opacity(0.1), in: Capsule())
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
     }
-    
+
     @ViewBuilder
     private func emptyIAQCard() -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -400,27 +386,20 @@ struct ChildDetailView: View {
                 Text(LocalizedStringKey("disconnected_no_data"))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.nafasTextMuted)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 12).padding(.vertical, 5)
                     .background(Color.gray.opacity(0.1), in: Capsule())
             }
-            
             Text("---")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(Color.nafasTextMuted)
-            
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4).fill(Color.nafasDivider).frame(height: 8)
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.nafasDivider)
-                        .frame(height: 8)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 0, height: 8)
+                        .fill(Color.gray.opacity(0.3)).frame(width: 0, height: 8)
                 }
             }
             .frame(height: 8)
-            
             HStack {
                 Text(LocalizedStringKey("iaq_scale_good"))
                 Spacer()
@@ -434,7 +413,7 @@ struct ChildDetailView: View {
         .padding(16)
         .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
     }
-    
+
     // MARK: - Peak Flow Section
     private var peakFlowSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -443,9 +422,8 @@ struct ChildDetailView: View {
                 .foregroundStyle(Color.nafasTextPrimary)
 
             if let latest = latestPeak {
-                // FIXED: Calculate color directly from the reading's value so disconnected works too!
                 let zoneColor: Color = latest.value >= 240 ? .nafasSuccess : (latest.value >= 160 ? .nafasWarning : .nafasDanger)
-                
+
                 HStack(spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12).fill(zoneColor.opacity(0.12)).frame(width: 52, height: 52)
@@ -454,7 +432,8 @@ struct ChildDetailView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(String(format: NSLocalizedString("peak_last_reading", comment: ""), latest.value))
                             .font(.system(size: 16, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
-                        Text("\(latest.date) at \(latest.time)")
+                        // ← was "\(latest.date) at \(latest.time)" — hardcoded "at"
+                        Text(String(format: NSLocalizedString("%@ at %@", comment: ""), latest.date, latest.time))
                             .font(.nafasCaption()).foregroundStyle(Color.nafasTextMuted)
                         if !latest.note.isEmpty {
                             Text(latest.note)
@@ -502,9 +481,7 @@ struct ChildDetailView: View {
                 .foregroundStyle(Color.nafasDanger)
                 .multilineTextAlignment(.leading)
             Spacer()
-            Button {
-                dismissedAlerts.insert(alertId)
-            } label: {
+            Button { dismissedAlerts.insert(alertId) } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(Color.nafasDanger)
@@ -528,12 +505,10 @@ struct ChildDetailView: View {
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(Color.nafasTextPrimary)
             }
-            ForEach(child.emergencyPhoneNumbers.filter { !$0.isEmpty }, id: \.self) { phone in
+            ForEach(currentChild.emergencyPhoneNumbers.filter { !$0.isEmpty }, id: \.self) { phone in
                 Button {
-                    // STRCITLY SANITIZED PHONE NUMBER URL
                     let cleanPhone = phone.filter { "0123456789+".contains($0) }
                     if let url = URL(string: "tel://\(cleanPhone)") {
-                        // Open without canOpenURL check to bypass silent simulator failure
                         UIApplication.shared.open(url)
                     }
                 } label: {
@@ -552,10 +527,8 @@ struct ChildDetailView: View {
                     .foregroundStyle(Color.nafasDanger)
                     .padding(12)
                     .background(Color.nafasDanger.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(Color.nafasDanger.opacity(0.3), lineWidth: 1)
-                    )
+                    .overlay(RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.nafasDanger.opacity(0.3), lineWidth: 1))
                 }
             }
         }
@@ -574,8 +547,14 @@ struct ChildDetailView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(LocalizedStringKey("wristband_connected_title"))
                     .font(.system(size: 15, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
-                Text("\(child.deviceID ?? "NF-XXXX") · \(String(format: NSLocalizedString("wristband_last_sync", comment: ""), lastSync))")
-                    .font(.nafasCaption()).foregroundStyle(Color.nafasTextMuted)
+                // ← was manual string composition + hardcoded "NF-XXXX" fallback
+                // Now uses wristband_device_sync key for both device ID and last sync in one pass
+                Text(String(
+                    format: NSLocalizedString("wristband_device_sync", comment: ""),
+                    child.deviceID ?? NSLocalizedString("device_id_unknown", comment: ""),
+                    String(format: NSLocalizedString("wristband_last_sync", comment: ""), lastSync)
+                ))
+                .font(.nafasCaption()).foregroundStyle(Color.nafasTextMuted)
             }
             Spacer()
             HStack(spacing: 4) {
@@ -615,12 +594,17 @@ struct ChildDetailView: View {
 
     private func iaqCard(_ v: VitalSnapshot) -> some View {
         let iaqColor: Color = v.iaqStatus == .good ? .nafasSuccess : v.iaqStatus == .moderate ? .nafasWarning : .nafasDanger
-        let iaqLabel = v.iaqStatus == .good ? NSLocalizedString("iaq_good", comment: "") : v.iaqStatus == .moderate ? NSLocalizedString("iaq_moderate", comment: "") : NSLocalizedString("iaq_poor", comment: "")
+        let iaqLabel = v.iaqStatus == .good
+            ? NSLocalizedString("iaq_good",     comment: "")
+            : v.iaqStatus == .moderate
+                ? NSLocalizedString("iaq_moderate", comment: "")
+                : NSLocalizedString("iaq_poor",     comment: "")
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 HStack(spacing: 8) {
                     Image(systemName: "wind").font(.system(size: 18)).foregroundStyle(Color.orange)
-                    Text(LocalizedStringKey("vital_indoor_air_quality")).font(.system(size: 13)).foregroundStyle(Color.nafasTextMuted)
+                    Text(LocalizedStringKey("vital_indoor_air_quality"))
+                        .font(.system(size: 13)).foregroundStyle(Color.nafasTextMuted)
                 }
                 Spacer()
                 HStack(spacing: 4) {
@@ -630,7 +614,9 @@ struct ChildDetailView: View {
                 .padding(.horizontal, 12).padding(.vertical, 5)
                 .background(iaqColor.opacity(0.10), in: Capsule())
             }
-            Text("IAQ \(v.iaq)").font(.system(size: 24, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
+            // ← was "IAQ \(v.iaq)" — hardcoded "IAQ" prefix
+            Text(String(format: NSLocalizedString("iaq_value_format", comment: ""), v.iaq))
+                .font(.system(size: 24, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4).fill(Color.nafasDivider).frame(height: 8)
@@ -639,7 +625,11 @@ struct ChildDetailView: View {
                 }
             }.frame(height: 8)
             HStack {
-                Text(LocalizedStringKey("iaq_scale_good")); Spacer(); Text(LocalizedStringKey("iaq_scale_moderate")); Spacer(); Text(LocalizedStringKey("iaq_scale_poor"))
+                Text(LocalizedStringKey("iaq_scale_good"))
+                Spacer()
+                Text(LocalizedStringKey("iaq_scale_moderate"))
+                Spacer()
+                Text(LocalizedStringKey("iaq_scale_poor"))
             }
             .font(.system(size: 11)).foregroundStyle(Color.nafasTextMuted)
         }
@@ -649,33 +639,33 @@ struct ChildDetailView: View {
 
     // MARK: - Today's Summary Section
     private var todaySummarySection: some View {
-        // 1. Get today's exact date string to match your saved records
+        // Use setLocalizedDateFormatFromTemplate so the generated string matches
+        // the format stored in HistoryEntry.date and PeakFlowEntry.date,
+        // which NafasStore also builds with the same template.
+        // ← was df.dateFormat = "EEE, d MMM" — hardcoded English-only format
         let df = DateFormatter()
-        df.dateFormat = "EEE, d MMM"
+        df.setLocalizedDateFormatFromTemplate("EEE, d MMM")
         let todayString = df.string(from: Date())
-        
-        // 2. Directly access the store's dictionaries
+
         let history = store.historyEntries[child.id.uuidString] ?? []
-        let peaks = store.peakFlowLogs[child.id.uuidString] ?? []
-        
-        // 3. Filter specifically for TODAY
+        let peaks   = store.peakFlowLogs[child.id.uuidString]  ?? []
+
         let todayHistory = history.filter { $0.date == todayString }
-        let todayPeaks = peaks.filter { $0.date == todayString }
-        
-        // 4. Calculate exact stats
-        let totalReadings = todayHistory.count + todayPeaks.count
+        let todayPeaks   = peaks.filter   { $0.date == todayString }
+
+        let totalReadings   = todayHistory.count + todayPeaks.count
         let latestPeakValue = todayPeaks.first?.value ?? 0
-        
+
         let validSpO2 = todayHistory.compactMap { $0.spO2 }
-        let avgSpO2 = validSpO2.isEmpty ? 0 : validSpO2.reduce(0, +) / validSpO2.count
+        let avgSpO2   = validSpO2.isEmpty ? 0 : validSpO2.reduce(0, +) / validSpO2.count
 
         return VStack(alignment: .leading, spacing: 12) {
             Text(LocalizedStringKey("summary_today"))
                 .font(.system(size: 20, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
 
             HStack(spacing: 12) {
-                summaryTile(value: "\(totalReadings)", label: LocalizedStringKey("summary_readings"))
-                summaryTile(value: avgSpO2 > 0 ? "\(avgSpO2)%" : "—", label: LocalizedStringKey("summary_avg_spo2"), color: Color.nafasPrimary)
+                summaryTile(value: "\(totalReadings)",                        label: LocalizedStringKey("summary_readings"))
+                summaryTile(value: avgSpO2 > 0 ? "\(avgSpO2)%" : "—",        label: LocalizedStringKey("summary_avg_spo2"),  color: Color.nafasPrimary)
                 summaryTile(value: latestPeakValue > 0 ? "\(latestPeakValue)" : "—", label: LocalizedStringKey("summary_peak_lm"), color: Color.nafasPrimary)
             }
 
@@ -702,10 +692,14 @@ struct ChildDetailView: View {
         s == .normal ? .nafasSuccess : s == .low ? .nafasDanger : .nafasWarning
     }
     private func bpStatusLabel(_ s: VitalSnapshot.VitalStatus) -> String {
-        s == .normal ? NSLocalizedString("status_normal", comment: "") : s == .low ? NSLocalizedString("status_low", comment: "") : NSLocalizedString("status_high", comment: "")
+        s == .normal ? NSLocalizedString("status_normal", comment: "") :
+        s == .low    ? NSLocalizedString("status_low",    comment: "") :
+                       NSLocalizedString("status_high",   comment: "")
     }
     private func spO2StatusLabel(_ s: VitalSnapshot.VitalStatus) -> String {
-        s == .normal ? NSLocalizedString("status_normal", comment: "") : s == .low ? NSLocalizedString("status_low_warning", comment: "") : NSLocalizedString("status_high", comment: "")
+        s == .normal ? NSLocalizedString("status_normal",      comment: "") :
+        s == .low    ? NSLocalizedString("status_low_warning", comment: "") :
+                       NSLocalizedString("status_high",        comment: "")
     }
 }
 
@@ -717,19 +711,29 @@ struct ChildSideMenuView: View {
     let onEditChild: () -> Void
     let onHealthHistory: () -> Void
     let onDeleteChild: () -> Void
-    
+
     @ObservedObject var userManager = UserProfileManager.shared
     @AppStorage("nafas_dark_mode") private var darkMode = false
+    // Stored value is "English" or "Arabic" — intentionally language-neutral
+    // internal keys used by app logic. Never displayed raw; use localizedLanguageLabel.
     @AppStorage("nafas_language") private var language = "English"
 
     private var userName: String { userManager.displayName ?? child.name }
-    private var initial: String { String(userName.prefix(1)).uppercased() }
+    private var initial: String  { String(userName.prefix(1)).uppercased() }
+
+    // ← was displaying raw "English"/"Arabic" stored value in the UI
+    private var localizedLanguageLabel: String {
+        language == "English"
+            ? NSLocalizedString("English", comment: "")  // → "English" / "الإنجليزية"
+            : NSLocalizedString("Arabic",  comment: "")  // → "Arabic"  / "العربية"
+    }
 
     private func close() {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) { isOpen = false }
     }
-    
+
     private func toggleLanguage() {
+        // Toggle the stored key (always English/Arabic as internal keys)
         language = (language == "English") ? "Arabic" : "English"
         close()
     }
@@ -747,8 +751,7 @@ struct ChildSideMenuView: View {
                         if let avatarData = child.avatarImageData,
                            let uiImage = UIImage(data: avatarData) {
                             Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
+                                .resizable().scaledToFill()
                                 .frame(width: 56, height: 56)
                                 .clipShape(Circle())
                         } else {
@@ -767,8 +770,7 @@ struct ChildSideMenuView: View {
                         Text(String(format: NSLocalizedString("child_age_years_old", comment: ""), child.age))
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Color.nafasPrimary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, 10).padding(.vertical, 3)
                             .background(Color.nafasPrimaryLight, in: Capsule())
                     }
                 }
@@ -779,8 +781,6 @@ struct ChildSideMenuView: View {
                 Divider().padding(.horizontal, 24)
 
                 VStack(spacing: 6) {
-                    
-                    // NEW: Emergency Call Row strictly sanitized
                     if !child.emergencyPhoneNumbers.isEmpty {
                         row(icon: "phone.fill", labelKey: "menu_emergency_call") {
                             close()
@@ -792,40 +792,25 @@ struct ChildSideMenuView: View {
                             }
                         }
                     }
-                    
-                    // Edit Child Info
-                    row(icon: "pencil", labelKey: "child_menu_edit_info") {
-                        close()
-                        onEditChild()
-                    }
-                    
-                    // Health History
-                    row(icon: "calendar", labelKey: "child_menu_health_history") {
-                        close()
-                        onHealthHistory()
-                    }
-                    
-                    // Dark Mode Toggle
-                    toggleRow(icon: "moon", labelKey: "menu_dark_mode", binding: $darkMode)
-                    
-                    // Language Toggle
-                    valueRow(icon: "globe", labelKey: "menu_language", value: language, action: toggleLanguage)
-                    
-                    Divider()
-                        .padding(.vertical, 8)
-                    
-                    // Delete Child (Destructive)
+                    row(icon: "pencil",    labelKey: "child_menu_edit_info")      { close(); onEditChild() }
+                    row(icon: "calendar",  labelKey: "child_menu_health_history") { close(); onHealthHistory() }
+                    toggleRow(icon: "moon",  labelKey: "menu_dark_mode", binding: $darkMode)
+                    // ← was value: language (raw stored key) — now uses localizedLanguageLabel
+                    valueRow(icon: "globe", labelKey: "menu_language", value: localizedLanguageLabel, action: toggleLanguage)
+
+                    Divider().padding(.vertical, 8)
+
                     destructiveRow(icon: "trash", labelKey: "child_menu_delete") {
-                        close()
-                        onDeleteChild()
+                        close(); onDeleteChild()
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
 
                 Spacer()
-                
-                Text("Nafas v1.0.0")
+
+                // ← was Text("Nafas v1.0.0") — uses existing xcstrings key
+                Text(NSLocalizedString("Nafas v1.0.0", comment: "App version footer"))
                     .font(.system(size: 12))
                     .foregroundStyle(Color.nafasTextMuted)
                     .frame(maxWidth: .infinity)
@@ -848,12 +833,11 @@ struct ChildSideMenuView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.nafasTextMuted)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 13)
+            .padding(.horizontal, 14).padding(.vertical, 13)
             .background(Color.nafasBackground, in: RoundedRectangle(cornerRadius: 14))
         }
     }
-    
+
     @ViewBuilder
     private func destructiveRow(icon: String, labelKey: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -867,8 +851,7 @@ struct ChildSideMenuView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.nafasDanger.opacity(0.7))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 13)
+            .padding(.horizontal, 14).padding(.vertical, 13)
             .background(Color.nafasBackground, in: RoundedRectangle(cornerRadius: 14))
         }
     }
@@ -886,8 +869,7 @@ struct ChildSideMenuView: View {
                 .tint(Color.nafasPrimary)
                 .scaleEffect(0.85)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 13)
+        .padding(.horizontal, 14).padding(.vertical, 13)
         .background(Color.nafasBackground, in: RoundedRectangle(cornerRadius: 14))
     }
 
@@ -907,8 +889,7 @@ struct ChildSideMenuView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.nafasTextMuted)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 13)
+            .padding(.horizontal, 14).padding(.vertical, 13)
             .background(Color.nafasBackground, in: RoundedRectangle(cornerRadius: 14))
         }
     }

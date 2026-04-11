@@ -28,6 +28,46 @@ final class NafasStore: ObservableObject {
         let calendar = Calendar.current
         let today = Date()
         
+        // ── Locale-aware formatters ───────────────────────────────────────────
+        // History rows: "Wed, 8 Apr 2026"  →  "الأربعاء، ٨ أبريل ٢٠٢٦" in AR
+        let historyDateFmt = DateFormatter()
+        historyDateFmt.setLocalizedDateFormatFromTemplate("EEE, d MMM yyyy")
+
+        // Peak flow rows: "Wed, 8 Apr"  →  "الأربعاء، ٨ أبريل" in AR
+        let shortDateFmt = DateFormatter()
+        shortDateFmt.setLocalizedDateFormatFromTemplate("EEE, d MMM")
+
+        // Time: "07:30 AM"  →  "٧:٣٠ ص" in AR
+        let timeFmt = DateFormatter()
+        timeFmt.timeStyle = .short
+        timeFmt.dateStyle = .none
+
+        // ── Mock dates ────────────────────────────────────────────────────────
+        let mock1 = calendar.date(from: DateComponents(
+            year: 2026, month: 4, day: 8, hour: 7, minute: 30))!
+        let mock2 = calendar.date(from: DateComponents(
+            year: 2026, month: 4, day: 8, hour: 5, minute: 45))!
+
+        let histDate1 = historyDateFmt.string(from: mock1)   // e.g. "Wed, 8 Apr 2026"
+        let histDate2 = historyDateFmt.string(from: mock2)
+        let shortDate  = shortDateFmt.string(from: mock1)    // e.g. "Wed, 8 Apr"
+        let time1      = timeFmt.string(from: mock1)          // e.g. "7:30 AM"
+        let time2      = timeFmt.string(from: mock2)          // e.g. "5:45 AM"
+
+        // ── Localized mock strings ────────────────────────────────────────────
+        let lastSync = NSLocalizedString(
+            "mock_last_sync_5min",
+            comment: "Mock last-sync label shown in wristband connection detail")
+
+        let noteLowInhaler = NSLocalizedString(
+            "mock_peak_note_low_inhaler",
+            comment: "Mock peak flow note — low reading, inhaler used")
+
+        let noteNighttime = NSLocalizedString(
+            "mock_peak_note_nighttime",
+            comment: "Mock peak flow note — nighttime asthma episode")
+
+        // ── Children ──────────────────────────────────────────────────────────
         // Single default account — Nora showing an asthma attack risk scenario
         children = [
             ChildModel(
@@ -43,32 +83,57 @@ final class NafasStore: ObservableObject {
                 avatarColor: "#E0478A",
                 guardianRelationship: .mother,
                 avatarImageData: nil,
-                emergencyPhoneNumbers: ["920000911", "0501234567"]
+                emergencyPhoneNumbers: ["501234567"]
             )
         ]
-        
-        // Latest Vitals — Nora only
+
+        // ── Latest Vitals ─────────────────────────────────────────────────────
         latestVitals = [
             "11111111-0000-0000-0000-000000000002": VitalSnapshot(
-                bp: "108/70", spO2: 91, iaq: 62, peakFlow: 195,
-                bpStatus: .normal, spO2Status: .low, iaqStatus: .moderate,
-                peakZone: .red, lastSync: "5 min ago", deviceID: "NF-7C4D"
+                bp: "108/70",
+                spO2: 91,
+                iaq: 62,
+                peakFlow: 195,
+                bpStatus: .normal,
+                spO2Status: .low,
+                iaqStatus: .moderate,
+                peakZone: .red,
+                lastSync: lastSync,          // ← localized "5 min ago"
+                deviceID: "NF-7C4D"
             )
         ]
-        
-        // History Entries — Nora's attack history only
+
+        // ── History Entries ───────────────────────────────────────────────────
         historyEntries = [
             "11111111-0000-0000-0000-000000000002": [
-                HistoryEntry(date: "Wed, 8 Apr 2026", time: "07:30 AM", bp: "108/70", spO2: 91, iaq: 62, peakFlow: 195, alertLevel: .danger),
-                HistoryEntry(date: "Wed, 8 Apr 2026", time: "05:45 AM", bp: "106/68", spO2: 89, iaq: 70, peakFlow: 180, alertLevel: .danger),
+                HistoryEntry(
+                    date: histDate1, time: time1,  // ← locale-formatted
+                    bp: "108/70", spO2: 91, iaq: 62, peakFlow: 195,
+                    alertLevel: .danger
+                ),
+                HistoryEntry(
+                    date: histDate2, time: time2,  // ← locale-formatted
+                    bp: "106/68", spO2: 89, iaq: 70, peakFlow: 180,
+                    alertLevel: .danger
+                )
             ]
         ]
-        
-        // Peak Flow Logs — Nora only
+
+        // ── Peak Flow Logs ────────────────────────────────────────────────────
         peakFlowLogs = [
             "11111111-0000-0000-0000-000000000002": [
-                PeakFlowEntry(value: 195, date: "Wed, 8 Apr", time: "07:30 AM", note: "Low — used inhaler"),
-                PeakFlowEntry(value: 180, date: "Wed, 8 Apr", time: "05:45 AM", note: "Nighttime episode"),
+                PeakFlowEntry(
+                    value: 195,
+                    date: shortDate,           // ← locale-formatted
+                    time: time1,               // ← locale-formatted
+                    note: noteLowInhaler       // ← localized
+                ),
+                PeakFlowEntry(
+                    value: 180,
+                    date: shortDate,           // ← locale-formatted
+                    time: time2,               // ← locale-formatted
+                    note: noteNighttime        // ← localized
+                )
             ]
         ]
     }
@@ -104,6 +169,7 @@ final class NafasStore: ObservableObject {
             latestVitals[childID] = v
         }
     }
+    
     func addHistoryEntry(childID: String, entry: HistoryEntry) {
         if historyEntries[childID] == nil {
             historyEntries[childID] = []

@@ -430,7 +430,7 @@ struct EditChildView: View {
     private var arePhonesValid: Bool {
         let activePhones = emergencyPhoneNumbers.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         if activePhones.isEmpty { return true }
-        return activePhones.allSatisfy { $0.count == 7 }
+        return activePhones.allSatisfy { $0.count == 9 }
     }
     
     init(child: ChildModel) {
@@ -608,8 +608,8 @@ struct EditChildView: View {
                                         .font(.nafasBody())
                                         .onChange(of: emergencyPhoneNumbers[idx]) { oldValue, newValue in
                                             var filtered = newValue.filter { "0123456789".contains($0) }
-                                            if filtered.count > 7 {
-                                                filtered = String(filtered.prefix(7))
+                                            if filtered.count > 9 {
+                                                filtered = String(filtered.prefix(9))
                                             }
                                             if emergencyPhoneNumbers[idx] != filtered {
                                                 emergencyPhoneNumbers[idx] = filtered
@@ -636,7 +636,7 @@ struct EditChildView: View {
                             
                             // WARNING MESSAGE
                             if !arePhonesValid {
-                                Text(LocalizedStringKey("Phone numbers must be exactly 7 digits."))
+                                Text(LocalizedStringKey("Phone numbers must be exactly 9 digits."))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(Color.nafasDanger)
                                     .padding(.top, 2)

@@ -40,6 +40,7 @@
     },
     "%@ · %@" : {
       "comment" : "Device ID · last sync",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -358,7 +359,6 @@
     },
     "Arabic" : {
       "comment" : "Language name in English/Arabic",
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -994,14 +994,14 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "مثال: 0501234567"
+            "state" : "needs_review",
+            "value" : "مثال: 501234567"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "e.g. 0501234567"
+            "value" : "e.g. 501234567"
           }
         }
       }
@@ -1387,6 +1387,23 @@
         }
       }
     },
+    "device_id_unknown" : {
+      "comment" : "Fallback placeholder shown when a child's wristband device ID is not yet known",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NF-XXXX"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NF-XXXX"
+          }
+        }
+      }
+    },
     "Devices Found" : {
       "comment" : "BT devices list header",
       "localizations" : {
@@ -1646,7 +1663,6 @@
     },
     "English" : {
       "comment" : "Language name in English/Arabic",
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1764,6 +1780,12 @@
         }
       }
     },
+    "gender_female" : {
+      "comment" : "Display label for female gender"
+    },
+    "gender_male" : {
+      "comment" : "Display label for male gender"
+    },
     "Good job! Keep monitoring your child's health." : {
       "comment" : "Empty history encouragement",
       "extractionState" : "stale",
@@ -1781,6 +1803,21 @@
           }
         }
       }
+    },
+    "guardian_father" : {
+      "comment" : "Guardian relationship: father"
+    },
+    "guardian_grandparent" : {
+      "comment" : "Guardian relationship: grandparent"
+    },
+    "guardian_mother" : {
+      "comment" : "Guardian relationship: mother"
+    },
+    "guardian_other" : {
+      "comment" : "Guardian relationship: other"
+    },
+    "guardian_sibling" : {
+      "comment" : "Guardian relationship: sibling"
     },
     "history_attacks_label" : {
       "comment" : "History summary attacks tile",
@@ -2283,6 +2320,7 @@
     },
     "IAQ %lld" : {
       "comment" : "IAQ value label",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2396,6 +2434,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "100+ Poor"
+          }
+        }
+      }
+    },
+    "iaq_value_format" : {
+      "comment" : "IAQ reading display in the vital card. %d = numeric IAQ value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جودة الهواء %d"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IAQ %d"
           }
         }
       }
@@ -2625,7 +2680,72 @@
       }
     },
     "mmHg" : {
-
+      "comment" : "Blood pressure unit label",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملم زئبق"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mmHg"
+          }
+        }
+      }
+    },
+    "mock_last_sync_5min" : {
+      "comment" : "Mock last-sync label shown in wristband connection detail",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "٥ دقائق"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 min "
+          }
+        }
+      }
+    },
+    "mock_peak_note_low_inhaler" : {
+      "comment" : "Mock peak flow note — low reading, inhaler used",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "منخفض"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "low"
+          }
+        }
+      }
+    },
+    "mock_peak_note_nighttime" : {
+      "comment" : "Mock peak flow note — nighttime asthma episode",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مساء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "night time "
+          }
+        }
+      }
     },
     "Nafas v1.0.0" : {
       "comment" : "App version footer",
@@ -2980,7 +3100,6 @@
     },
     "pdf_avg_spo2" : {
       "comment" : "PDF avg SpO2 line",
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2995,6 +3114,22 @@
           }
         }
       }
+    },
+    "pdf_entry_bp" : {
+      "comment" : "A single line describing a vital sign (e.g. \"120/80 mmHg\"). The argument is a localized string describing the type of vital sign (",
+      "isCommentAutoGenerated" : true
+    },
+    "pdf_entry_iaq" : {
+      "comment" : "A single line in the PDF that shows an IAQ reading. The argument is the IAQ value, formatted as a whole number.",
+      "isCommentAutoGenerated" : true
+    },
+    "pdf_entry_peak_flow" : {
+      "comment" : "A bullet point in the PDF that shows the peak flow rate. The placeholder is replaced with the actual value.",
+      "isCommentAutoGenerated" : true
+    },
+    "pdf_entry_spo2" : {
+      "comment" : "A formatted string that appears in a PDF entry block, showing a single vital sign (e.g. SPO2 value). The argument is the vital sign value,",
+      "isCommentAutoGenerated" : true
     },
     "pdf_generated_on" : {
       "comment" : "PDF generation date label",
@@ -3117,7 +3252,6 @@
     },
     "pdf_total_attacks" : {
       "comment" : "PDF total attacks line",
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3510,6 +3644,7 @@
     },
     "Phone numbers must be exactly 7 digits." : {
       "comment" : "Phone validation error",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -4328,7 +4463,6 @@
     },
     "wristband_device_sync" : {
       "comment" : "Wristband device ID and last sync",
-      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

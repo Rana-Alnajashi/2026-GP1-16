@@ -32,10 +32,16 @@ struct HealthHistoryView: View {
     private var allEntries: [HistoryEntry] {
         store.history(for: child.id.uuidString).filter { $0.alertLevel == .danger }
     }
-    
+
     private var filteredEntries: [HistoryEntry] {
         switch selectedTab {
-        case .today:     return allEntries.filter { $0.date.contains("Apr") }
+        case .today:
+            // Format today using the same locale-aware template used in NafasStore
+            // so the comparison works correctly in both English and Arabic.
+            let fmt = DateFormatter()
+            fmt.setLocalizedDateFormatFromTemplate("EEE, d MMM yyyy")
+            let todayString = fmt.string(from: Date())
+            return allEntries.filter { $0.date == todayString }
         case .thisWeek:  return allEntries
         case .thisMonth: return allEntries
         case .last3:     return allEntries
@@ -209,83 +215,120 @@ struct HealthHistoryView: View {
             .padding(.horizontal, 20).padding(.bottom, 30)
         }
     }
-    
+
     // MARK: - PDF Generation
     private func generatePDF() {
-        let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595.2, height: 841.8)) // A4 size
-        
+        let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595.2, height: 841.8)) // A4
+
         let documentDirectory = FileManager.default.temporaryDirectory
         let pdfURL = documentDirectory.appendingPathComponent("\(child.name)_Attack_History.pdf")
-        
+
+        // ── Shared formatters ──────────────────────────────────────────────────
+        let dateFmt = DateFormatter()
+        dateFmt.dateStyle = .medium
+
+        // ── Reusable text attributes ───────────────────────────────────────────
+        let titleAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.boldSystemFont(ofSize: 24),
+            .foregroundColor: UIColor.systemBlue
+        ]
+        let subtitleAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.boldSystemFont(ofSize: 16)
+        ]
+        let bodyAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 12)
+        ]
+        let mutedAttrs: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 12),
+            .foregroundColor: UIColor.gray
+        ]
+
+        // ── Localized strings used in the PDF ─────────────────────────────────
+        // Summary block — uses existing pdf_total_attacks / pdf_avg_spo2 keys
+        let totalLine = String(
+            format: NSLocalizedString("pdf_total_attacks", comment: ""),
+            totalReadings
+        )
+        let avgLine = String(
+            format: NSLocalizedString("pdf_avg_spo2", comment: ""),
+            avgSpO2 > 0 ? String(format: "%.1f%%", avgSpO2) : "—"
+        )
+
         do {
             try pdfRenderer.writePDF(to: pdfURL) { context in
-                // Page 1 - Header and Summary
                 context.beginPage()
-                
-                let titleAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.boldSystemFont(ofSize: 24),
-                    .foregroundColor: UIColor.systemBlue
-                ]
+
+                // Title
                 let titleString = "\(child.name) - \(NSLocalizedString("history_nav_title", comment: ""))"
-                titleString.draw(at: CGPoint(x: 50, y: 50), withAttributes: titleAttributes)
-                
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateStyle = .medium
-                let dateString = String(format: NSLocalizedString("pdf_generated_on", comment: ""), dateFormatter.string(from: Date()))
-                let dateAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: 12),
-                    .foregroundColor: UIColor.gray
-                ]
-                dateString.draw(at: CGPoint(x: 50, y: 85), withAttributes: dateAttributes)
-                
-                // Summary
-                var yPosition: CGFloat = 120
-                let summaryAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.boldSystemFont(ofSize: 16)
-                ]
-                NSLocalizedString("pdf_title_summary", comment: "").draw(at: CGPoint(x: 50, y: yPosition), withAttributes: summaryAttributes)
-                yPosition += 25
-                
-                let summaryText = """
-                Total Attacks: \(totalReadings)
-                Average SpO2 during attacks: \(String(format: "%.1f%%", avgSpO2))
-                """
-                let textAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: 12)
-                ]
-                summaryText.draw(at: CGPoint(x: 50, y: yPosition), withAttributes: textAttributes)
-                yPosition += CGFloat(totalReadings > 0 ? 60 : 40)
-                
-                // Attack history
+                titleString.draw(at: CGPoint(x: 50, y: 50), withAttributes: titleAttrs)
+
+                // Generation date
+                let dateString = String(
+                    format: NSLocalizedString("pdf_generated_on", comment: ""),
+                    dateFmt.string(from: Date())
+                )
+                dateString.draw(at: CGPoint(x: 50, y: 85), withAttributes: mutedAttrs)
+
+                // ── Summary section ────────────────────────────────────────────
+                var y: CGFloat = 120
+                NSLocalizedString("pdf_title_summary", comment: "")
+                    .draw(at: CGPoint(x: 50, y: y), withAttributes: subtitleAttrs)
+                y += 25
+
+                totalLine.draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
+                y += 20
+                avgLine.draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
+                y += 40
+
+                // ── Attack history section ─────────────────────────────────────
                 if !filteredEntries.isEmpty {
-                    NSLocalizedString("pdf_title_history", comment: "").draw(at: CGPoint(x: 50, y: yPosition), withAttributes: summaryAttributes)
-                    yPosition += 25
-                    
+                    NSLocalizedString("pdf_title_history", comment: "")
+                        .draw(at: CGPoint(x: 50, y: y), withAttributes: subtitleAttrs)
+                    y += 25
+
                     for entry in filteredEntries {
-                        let entryText = """
-                        📅 \(entry.date) at \(entry.time)
-                           • SpO2: \(entry.spO2.map { "\($0)%" } ?? "—")
-                           • BP: \(entry.bp ?? "—")
-                           • IAQ: \(entry.iaq.map { "\($0)" } ?? "—")
-                           • Peak Flow: \(entry.peakFlow.map { "\($0) L/min" } ?? "—")
-                        """
-                        entryText.draw(at: CGPoint(x: 50, y: yPosition), withAttributes: textAttributes)
-                        yPosition += 70
-                        
-                        if yPosition > 750 {
+                        // Date + time — reuses the existing "%@ at %@" key
+                        let dateTimeLine = "📅 " + String(
+                            format: NSLocalizedString("%@ at %@", comment: "Peak flow date + time"),
+                            entry.date, entry.time
+                        )
+                        // Vital bullet lines — use the 4 new pdf_entry_ keys
+                        let spO2Line  = "   • " + String(
+                            format: NSLocalizedString("pdf_entry_spo2", comment: ""),
+                            entry.spO2.map { "\($0)%" } ?? "—"
+                        )
+                        let bpLine    = "   • " + String(
+                            format: NSLocalizedString("pdf_entry_bp", comment: ""),
+                            entry.bp ?? "—"
+                        )
+                        let iaqLine   = "   • " + String(
+                            format: NSLocalizedString("pdf_entry_iaq", comment: ""),
+                            entry.iaq.map { "\($0)" } ?? "—"
+                        )
+                        let peakLine  = "   • " + String(
+                            format: NSLocalizedString("pdf_entry_peak_flow", comment: ""),
+                            entry.peakFlow.map { "\($0)" } ?? "—"
+                        )
+
+                        let block = [dateTimeLine, spO2Line, bpLine, iaqLine, peakLine]
+                            .joined(separator: "\n")
+                        block.draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
+                        y += 80
+
+                        if y > 750 {
                             context.beginPage()
-                            yPosition = 50
+                            y = 50
                         }
                     }
                 } else {
-                    let noDataText = NSLocalizedString("pdf_no_data", comment: "")
-                    noDataText.draw(at: CGPoint(x: 50, y: yPosition), withAttributes: textAttributes)
+                    NSLocalizedString("pdf_no_data", comment: "")
+                        .draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
                 }
             }
-            
+
             self.pdfURL = pdfURL
             showPDFPreview = true
-            
+
         } catch {
             print("Failed to generate PDF: \(error)")
         }
@@ -296,7 +339,7 @@ struct HealthHistoryView: View {
 struct PDFPreviewView: View {
     let url: URL
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         NavigationStack {
             PDFKitView(url: url)
@@ -319,14 +362,14 @@ struct PDFPreviewView: View {
 // MARK: - PDFKit View
 struct PDFKitView: UIViewRepresentable {
     let url: URL
-    
+
     func makeUIView(context: Context) -> PDFView {
         let pdfView = PDFView()
         pdfView.document = PDFDocument(url: url)
         pdfView.autoScales = true
         return pdfView
     }
-    
+
     func updateUIView(_ uiView: PDFView, context: Context) {
         uiView.document = PDFDocument(url: url)
     }
