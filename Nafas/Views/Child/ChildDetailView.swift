@@ -26,7 +26,8 @@ struct ChildDetailView: View {
 
     // Direct dictionary access ensures SwiftUI updates immediately
     private var vitals: VitalSnapshot? {
-        store.latestVitals[child.id.uuidString]
+        // HACK: Read from a universal "TEST" mailbox instead of a specific child
+        store.latestVitals["TEST"] ?? store.latestVitals[child.id.uuidString]
     }
     private var peakFlows: [PeakFlowEntry] {
         store.peakFlowLogs[child.id.uuidString] ?? []
@@ -47,7 +48,7 @@ struct ChildDetailView: View {
         ZStack(alignment: .trailing) {
             // Main content
             Group {
-                if child.isConnected && vitals != nil {
+                if vitals != nil {
                     connectedView
                 } else {
                     disconnectedView
@@ -104,6 +105,22 @@ struct ChildDetailView: View {
         } message: {
             Text(LocalizedStringKey("child_delete_message"))
         }
+        // 👇 FINAL HACK FORCED HERE 👇
+        .onAppear {
+            // FORCE AWS CONNECTION IMMEDIATELY
+            NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: "Test_Device")
+        }
+        .onChange(of: child.isConnected) { oldValue, newValue in
+            if newValue, let deviceID = child.deviceID {
+                NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
+            } else {
+                NafasMQTTManager.shared.disconnect()
+            }
+        }
+        .onDisappear {
+            NafasMQTTManager.shared.disconnect()
+        }
+        // 👆 END OF MQTT HOOKS 👆
     }
 
     private func toggleMenu() {
@@ -134,7 +151,6 @@ struct ChildDetailView: View {
                     wristbandCard(lastSync: v.lastSync)
                 }
 
-                // Emergency Call Card — only shown during an active undismissed attack alert
                 if hasActiveAlert && !currentChild.emergencyPhoneNumbers.isEmpty {
                     emergencyCallCard
                 }
@@ -155,7 +171,7 @@ struct ChildDetailView: View {
                             icon: "heart.fill", iconColor: .red, iconBg: Color.red.opacity(0.12),
                             title: NSLocalizedString("vital_blood_pressure", comment: ""),
                             value: v.bp,
-                            unit: NSLocalizedString("mmHg", comment: ""),   // ← was "mmHg" literal
+                            unit: NSLocalizedString("mmHg", comment: ""),
                             status: bpStatusLabel(v.bpStatus),
                             statusColor: statusColor(v.bpStatus)
                         )
@@ -189,7 +205,6 @@ struct ChildDetailView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
 
-                // Connect Wristband Button at top
                 Button {
                     showBluetoothConnection = true
                 } label: {
@@ -204,7 +219,6 @@ struct ChildDetailView: View {
                     .background(Color.nafasPrimary, in: RoundedRectangle(cornerRadius: 12))
                 }
 
-                // Live Vitals Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text(LocalizedStringKey("vital_live_vitals"))
                         .font(.system(size: 20, weight: .bold))
@@ -215,7 +229,6 @@ struct ChildDetailView: View {
                         .foregroundStyle(Color.nafasTextMuted)
 
                     HStack(spacing: 12) {
-                        // Blood Pressure Card
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 8) {
                                 Image(systemName: "heart.fill")
@@ -228,7 +241,6 @@ struct ChildDetailView: View {
                             Text("---")
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(Color.nafasTextMuted)
-                            // ← was "mmHg" literal
                             Text(NSLocalizedString("mmHg", comment: ""))
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.nafasTextMuted)
@@ -242,7 +254,6 @@ struct ChildDetailView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
 
-                        // SpO2 Card
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 8) {
                                 Image(systemName: "drop.fill")
@@ -269,7 +280,6 @@ struct ChildDetailView: View {
                         .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
                     }
 
-                    // IAQ Card
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             HStack(spacing: 8) {
@@ -330,7 +340,7 @@ struct ChildDetailView: View {
                 emptyVitalCard(
                     icon: "heart.fill",
                     title: NSLocalizedString("disconnected_bp_title", comment: ""),
-                    unit: NSLocalizedString("mmHg", comment: "")  // ← was "mmHg" literal
+                    unit: NSLocalizedString("mmHg", comment: "")
                 )
                 emptyVitalCard(
                     icon: "drop.fill",
@@ -432,7 +442,6 @@ struct ChildDetailView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(String(format: NSLocalizedString("peak_last_reading", comment: ""), latest.value))
                             .font(.system(size: 16, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
-                        // ← was "\(latest.date) at \(latest.time)" — hardcoded "at"
                         Text(String(format: NSLocalizedString("%@ at %@", comment: ""), latest.date, latest.time))
                             .font(.nafasCaption()).foregroundStyle(Color.nafasTextMuted)
                         if !latest.note.isEmpty {
@@ -547,8 +556,6 @@ struct ChildDetailView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(LocalizedStringKey("wristband_connected_title"))
                     .font(.system(size: 15, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
-                // ← was manual string composition + hardcoded "NF-XXXX" fallback
-                // Now uses wristband_device_sync key for both device ID and last sync in one pass
                 Text(String(
                     format: NSLocalizedString("wristband_device_sync", comment: ""),
                     child.deviceID ?? NSLocalizedString("device_id_unknown", comment: ""),
@@ -614,7 +621,6 @@ struct ChildDetailView: View {
                 .padding(.horizontal, 12).padding(.vertical, 5)
                 .background(iaqColor.opacity(0.10), in: Capsule())
             }
-            // ← was "IAQ \(v.iaq)" — hardcoded "IAQ" prefix
             Text(String(format: NSLocalizedString("iaq_value_format", comment: ""), v.iaq))
                 .font(.system(size: 24, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
             GeometryReader { geo in
@@ -639,10 +645,6 @@ struct ChildDetailView: View {
 
     // MARK: - Today's Summary Section
     private var todaySummarySection: some View {
-        // Use setLocalizedDateFormatFromTemplate so the generated string matches
-        // the format stored in HistoryEntry.date and PeakFlowEntry.date,
-        // which NafasStore also builds with the same template.
-        // ← was df.dateFormat = "EEE, d MMM" — hardcoded English-only format
         let df = DateFormatter()
         df.setLocalizedDateFormatFromTemplate("EEE, d MMM")
         let todayString = df.string(from: Date())
@@ -714,18 +716,15 @@ struct ChildSideMenuView: View {
 
     @ObservedObject var userManager = UserProfileManager.shared
     @AppStorage("nafas_dark_mode") private var darkMode = false
-    // Stored value is "English" or "Arabic" — intentionally language-neutral
-    // internal keys used by app logic. Never displayed raw; use localizedLanguageLabel.
     @AppStorage("nafas_language") private var language = "English"
 
     private var userName: String { userManager.displayName ?? child.name }
     private var initial: String  { String(userName.prefix(1)).uppercased() }
 
-    // ← was displaying raw "English"/"Arabic" stored value in the UI
     private var localizedLanguageLabel: String {
         language == "English"
-            ? NSLocalizedString("English", comment: "")  // → "English" / "الإنجليزية"
-            : NSLocalizedString("Arabic",  comment: "")  // → "Arabic"  / "العربية"
+            ? NSLocalizedString("English", comment: "")
+            : NSLocalizedString("Arabic",  comment: "")
     }
 
     private func close() {
@@ -733,7 +732,6 @@ struct ChildSideMenuView: View {
     }
 
     private func toggleLanguage() {
-        // Toggle the stored key (always English/Arabic as internal keys)
         language = (language == "English") ? "Arabic" : "English"
         close()
     }
@@ -795,7 +793,6 @@ struct ChildSideMenuView: View {
                     row(icon: "pencil",    labelKey: "child_menu_edit_info")      { close(); onEditChild() }
                     row(icon: "calendar",  labelKey: "child_menu_health_history") { close(); onHealthHistory() }
                     toggleRow(icon: "moon",  labelKey: "menu_dark_mode", binding: $darkMode)
-                    // ← was value: language (raw stored key) — now uses localizedLanguageLabel
                     valueRow(icon: "globe", labelKey: "menu_language", value: localizedLanguageLabel, action: toggleLanguage)
 
                     Divider().padding(.vertical, 8)
@@ -809,7 +806,6 @@ struct ChildSideMenuView: View {
 
                 Spacer()
 
-                // ← was Text("Nafas v1.0.0") — uses existing xcstrings key
                 Text(NSLocalizedString("Nafas v1.0.0", comment: "App version footer"))
                     .font(.system(size: 12))
                     .foregroundStyle(Color.nafasTextMuted)
