@@ -13,7 +13,6 @@
 		123A15182F66149C00EEF7BE /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 123A15172F66149C00EEF7BE /* FirebaseDatabase */; };
 		124302FB2F7BDA00005BD907 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 124302FA2F7BDA00005BD907 /* GoogleSignIn */; };
 		124302FD2F7BDA00005BD907 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 124302FC2F7BDA00005BD907 /* GoogleSignInSwift */; };
-		124302FF2F7BDA9F005BD907 /* GoogleService-Info-2.plist in Resources */ = {isa = PBXBuildFile; fileRef = 124302FE2F7BDA9F005BD907 /* GoogleService-Info-2.plist */; };
 		124303072F7BE165005BD907 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 124303062F7BE165005BD907 /* FirebaseAuth */; };
 		1243030A2F7C0039005BD907 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124303092F7C0039005BD907 /* Utilities.swift */; };
 		125105622F6641DD006FCE40 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 125105612F6641DD006FCE40 /* FirebaseFirestore */; };
@@ -22,7 +21,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		124302FE2F7BDA9F005BD907 /* GoogleService-Info-2.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info-2.plist"; sourceTree = "<group>"; };
 		124303092F7C0039005BD907 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		12B0E93A2F6608B6005D68AE /* Nafas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nafas.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -31,9 +29,11 @@
 		123A151E2F66382900EEF7BE /* Exceptions for "Nafas" folder in "Nafas" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
-				Info/Info.plist,
+				Core/Info/Info.plist,
 			);
+			platformFiltersByRelativePath = {
+				Core/Certificates/ios_cert.p12 = (ios, );
+			};
 			target = 12B0E9392F6608B6005D68AE /* Nafas */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -89,7 +89,6 @@
 			isa = PBXGroup;
 			children = (
 				124303082F7BFFEE005BD907 /* Utilities */,
-				124302FE2F7BDA9F005BD907 /* GoogleService-Info-2.plist */,
 				12B0E93C2F6608B6005D68AE /* Nafas */,
 				124303052F7BE165005BD907 /* Frameworks */,
 				12B0E93B2F6608B6005D68AE /* Products */,
@@ -184,7 +183,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				124302FF2F7BDA9F005BD907 /* GoogleService-Info-2.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,10 +331,10 @@
 				CODE_SIGN_ENTITLEMENTS = Nafas/Nafas.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KC5RC2G5Q2;
+				DEVELOPMENT_TEAM = YRFHTZZ2P6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Nafas/Info.plist;
+				INFOPLIST_FILE = Nafas/Core/Info/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Nafas;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app requires Bluetooth to connect to and configure the Nafas Wristband";
@@ -355,7 +353,7 @@
 					"$(PROJECT_DIR)/Nafas/Packages/firebase-ios-sdk/Crashlytics/UnitTests/FIRCLSMachO/machO_data",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.App.Raghad.Nafas;
+				PRODUCT_BUNDLE_IDENTIFIER = com.App.Nafas;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -375,10 +373,10 @@
 				CODE_SIGN_ENTITLEMENTS = Nafas/Nafas.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KC5RC2G5Q2;
+				DEVELOPMENT_TEAM = YRFHTZZ2P6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Nafas/Info.plist;
+				INFOPLIST_FILE = Nafas/Core/Info/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Nafas;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app requires Bluetooth to connect to and configure the Nafas Wristband";
@@ -397,7 +395,7 @@
 					"$(PROJECT_DIR)/Nafas/Packages/firebase-ios-sdk/Crashlytics/UnitTests/FIRCLSMachO/machO_data",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.App.Raghad.Nafas;
+				PRODUCT_BUNDLE_IDENTIFIER = com.App.Nafas;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
