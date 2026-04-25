@@ -1,8 +1,8 @@
 import Foundation
 
 struct WeatherInfo {
-    var condition: LocalizedStringResource
-    var advice: LocalizedStringResource
+    var condition: String
+    var advice: String
     var windKmh: Int
     var aqi: Int
     var aqiLabel: String

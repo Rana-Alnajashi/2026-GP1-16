@@ -3,8 +3,8 @@ import Combine
 @MainActor
 final class HomeViewModel: ObservableObject {
     @Published var weather = WeatherInfo(
-        condition:LocalizedStringResource("Weather_Today"),
-        advice: LocalizedStringResource("Weather_Advice"),
+        condition: "Weather_Today",
+        advice: "Weather_Advice",
         windKmh: 28, aqi: 42, aqiLabel: "Good",
         humidityPercent: 65, sfSymbol: "wind"
     )

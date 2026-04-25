@@ -1,4 +1,5 @@
 import SwiftUI
+
 struct AddPeakFlowView: View {
     let child: ChildModel
     @Environment(\.dismiss) var dismiss
@@ -26,12 +27,14 @@ struct AddPeakFlowView: View {
         case .none:   return .nafasTextMuted
         }
     }
-    private var zoneLabel: String {
+    
+    // 🚀 FIX 1: Return the raw keys instead of NSLocalizedString
+    private var zoneLabelKey: String {
         switch zone {
-        case .green:  return NSLocalizedString("peak_zone_green_label", comment: "")
-        case .yellow: return NSLocalizedString("peak_zone_yellow_label", comment: "")
-        case .red:    return NSLocalizedString("peak_zone_red_label", comment: "")
-        case .none:   return NSLocalizedString("peak_zone_none_label", comment: "")
+        case .green:  return "peak_zone_green_label"
+        case .yellow: return "peak_zone_yellow_label"
+        case .red:    return "peak_zone_red_label"
+        case .none:   return "peak_zone_none_label"
         }
     }
     
@@ -60,7 +63,7 @@ struct AddPeakFlowView: View {
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.center)
                                 .frame(width: 160)
-                            Text("L/min")
+                            Text(LocalizedStringKey("L/min")) // 🚀 Wrapped unit
                                 .font(.system(size: 20, weight: .medium))
                                 .foregroundStyle(Color.nafasTextMuted)
                         }
@@ -68,7 +71,8 @@ struct AddPeakFlowView: View {
                         if intValue > 0 {
                             HStack(spacing: 6) {
                                 Circle().fill(zoneColor).frame(width: 8, height: 8)
-                                Text(zoneLabel)
+                                // 🚀 Wrapped dynamic label
+                                Text(LocalizedStringKey(zoneLabelKey))
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundStyle(zoneColor)
                             }
@@ -85,9 +89,11 @@ struct AddPeakFlowView: View {
                         Text(LocalizedStringKey("peak_zone_reference_label"))
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(Color.nafasTextPrimary)
-                        zoneGuideRow(color: .nafasSuccess, zone: NSLocalizedString("peak_zone_green", comment: ""), description: NSLocalizedString("peak_zone_green_desc", comment: ""))
-                        zoneGuideRow(color: .nafasWarning, zone: NSLocalizedString("peak_zone_yellow", comment: ""), description: NSLocalizedString("peak_zone_yellow_desc", comment: ""))
-                        zoneGuideRow(color: .nafasDanger,  zone: NSLocalizedString("peak_zone_red", comment: ""),    description: NSLocalizedString("peak_zone_red_desc", comment: ""))
+                        
+                        // 🚀 FIX 2: Passing raw keys to the updated function
+                        zoneGuideRow(color: .nafasSuccess, zoneKey: "peak_zone_green", descriptionKey: "peak_zone_green_desc")
+                        zoneGuideRow(color: .nafasWarning, zoneKey: "peak_zone_yellow", descriptionKey: "peak_zone_yellow_desc")
+                        zoneGuideRow(color: .nafasDanger,  zoneKey: "peak_zone_red", descriptionKey: "peak_zone_red_desc")
                     }
                     .padding(16)
                     .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
@@ -97,7 +103,9 @@ struct AddPeakFlowView: View {
                         Text(LocalizedStringKey("peak_note_label"))
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Color.nafasTextPrimary)
-                        TextField(NSLocalizedString("peak_note_placeholder", comment: ""), text: $note, axis: .vertical)
+                        
+                        // 🚀 FIX 3: LocalizedStringKey for TextField Placeholder
+                        TextField(LocalizedStringKey("peak_note_placeholder"), text: $note, axis: .vertical)
                             .font(.nafasBody())
                             .lineLimit(3, reservesSpace: true)
                             .padding(14)
@@ -148,12 +156,13 @@ struct AddPeakFlowView: View {
         }
     }
     
-    private func zoneGuideRow(color: Color, zone: String, description: String) -> some View {
+    // 🚀 FIX 4: Function now accepts Keys and uses LocalizedStringKey
+    private func zoneGuideRow(color: Color, zoneKey: String, descriptionKey: String) -> some View {
         HStack(spacing: 12) {
             Circle().fill(color).frame(width: 10, height: 10)
             VStack(alignment: .leading, spacing: 2) {
-                Text(zone).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.nafasTextPrimary)
-                Text(description).font(.system(size: 12)).foregroundStyle(Color.nafasTextMuted)
+                Text(LocalizedStringKey(zoneKey)).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.nafasTextPrimary)
+                Text(LocalizedStringKey(descriptionKey)).font(.system(size: 12)).foregroundStyle(Color.nafasTextMuted)
             }
         }
     }

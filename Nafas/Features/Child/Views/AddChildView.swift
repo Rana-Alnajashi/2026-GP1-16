@@ -58,8 +58,9 @@ struct AddChildView: View {
                         
                         // Height and Weight
                         HStack(spacing: 12) {
-                            stepperField(label: NSLocalizedString("child_height_label", comment: ""), value: $viewModel.height, range: 50...200)
-                            stepperField(label: NSLocalizedString("child_weight_label", comment: ""), value: $viewModel.weight, range: 5...100)
+                            // 🚀 FIX 1: Passing the exact localization keys
+                            stepperField(labelKey: "child_height_label", value: $viewModel.height, range: 50...200)
+                            stepperField(labelKey: "child_weight_label", value: $viewModel.weight, range: 5...100)
                         }
                         
                         // Guardian Relationship
@@ -67,11 +68,15 @@ struct AddChildView: View {
                             Text(LocalizedStringKey("child_relationship_label")).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.nafasTextPrimary)
                             Menu {
                                 ForEach(ChildModel.GuardianRelationship.allCases, id: \.self) { rel in
-                                    Button(rel.rawValue) { viewModel.relationship = rel }
+                                    // 🚀 FIX 2: Wrapped Relatives in LocalizedStringKey
+                                    Button { viewModel.relationship = rel } label: {
+                                        Text(LocalizedStringKey(rel.rawValue))
+                                    }
                                 }
                             } label: {
                                 HStack {
-                                    Text(viewModel.relationship.rawValue).foregroundStyle(Color.nafasTextPrimary)
+                                    // 🚀 FIX 2: Wrapped the selected state in LocalizedStringKey
+                                    Text(LocalizedStringKey(viewModel.relationship.rawValue)).foregroundStyle(Color.nafasTextPrimary)
                                     Spacer()
                                     Image(systemName: "chevron.down").foregroundStyle(Color.nafasTextMuted)
                                 }.padding().background(RoundedRectangle(cornerRadius: 12).fill(Color.nafasBackground).overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.nafasDivider, lineWidth: 1)))
@@ -86,7 +91,8 @@ struct AddChildView: View {
                                     Button { viewModel.gender = g } label: {
                                         HStack(spacing: 6) {
                                             Image(systemName: viewModel.gender == g ? "largecircle.fill.circle" : "circle").foregroundStyle(Color.nafasPrimary)
-                                            Text(g.rawValue).font(.system(size: 15)).foregroundStyle(Color.nafasTextPrimary)
+                                            // 🚀 Wrapped Gender in LocalizedStringKey as well
+                                            Text(LocalizedStringKey(g.rawValue)).font(.system(size: 15)).foregroundStyle(Color.nafasTextPrimary)
                                         }
                                         .frame(maxWidth: .infinity).padding(.vertical, 12)
                                         .background(RoundedRectangle(cornerRadius: 12).fill(viewModel.gender == g ? Color.nafasPrimaryLight : Color.nafasBackground).overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(viewModel.gender == g ? Color.nafasPrimary : Color.nafasDivider, lineWidth: 1)))
@@ -162,10 +168,12 @@ struct AddChildView: View {
     }
     
     @ViewBuilder
-    private func stepperField(label: String, value: Binding<String>, range: ClosedRange<Int>) -> some View {
+    // 🚀 FIX 1: Accepting labelKey instead of label
+    private func stepperField(labelKey: String, value: Binding<String>, range: ClosedRange<Int>) -> some View {
         let intValue = Int(value.wrappedValue) ?? 0
         VStack(alignment: .leading, spacing: 6) {
-            Text(label).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.nafasTextPrimary)
+            // 🚀 FIX 1: Translating the key here
+            Text(LocalizedStringKey(labelKey)).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.nafasTextPrimary)
             HStack {
                 Button { value.wrappedValue = "\(max(range.lowerBound, intValue - 1))" } label: { Image(systemName: "minus.circle").font(.system(size: 24)).foregroundStyle(Color.nafasPrimary) }
                 TextField("0", text: value).font(.system(size: 18, weight: .semibold)).multilineTextAlignment(.center).keyboardType(.numberPad).frame(width: 60)

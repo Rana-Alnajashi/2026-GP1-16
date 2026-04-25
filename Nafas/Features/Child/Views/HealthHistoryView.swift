@@ -6,7 +6,6 @@ enum HistoryTab: String, CaseIterable {
     case today     = "history_tab_today"
     case thisWeek  = "history_tab_week"
     case thisMonth = "history_tab_month"
-    case last3     = "history_tab_3m"
 
     var localizedKey: LocalizedStringKey {
         LocalizedStringKey(self.rawValue)
@@ -21,6 +20,8 @@ struct HealthHistoryView: View {
     @State private var showPDFPreview = false
     @State private var pdfURL: URL?
     @Environment(\.dismiss) var dismiss
+    
+    @AppStorage("nafas_language") private var language = "English"
 
     private var allEntries: [HistoryEntry] {
         store.history(for: child.id.uuidString).filter { $0.alertLevel == .danger }
@@ -35,7 +36,6 @@ struct HealthHistoryView: View {
             return allEntries.filter { $0.date == todayString }
         case .thisWeek:  return allEntries
         case .thisMonth: return allEntries
-        case .last3:     return allEntries
         }
     }
 
@@ -199,55 +199,96 @@ struct HealthHistoryView: View {
             .padding(.horizontal, 20).padding(.bottom, 30)
         }
     }
+    
+    // Helper function to force PDF generation in the correct language bundle
+    private func localizedText(_ key: String) -> String {
+        let langCode = language == "Arabic" ? "ar" : "en"
+        if let path = Bundle.main.path(forResource: langCode, ofType: "lproj"),
+           let bundle = Bundle(path: path) {
+            return NSLocalizedString(key, bundle: bundle, comment: "")
+        }
+        return NSLocalizedString(key, comment: "")
+    }
 
-    // ... Keep all PDF Generation functions below exactly the same ...
+    // MARK: - 🚀 PDF Generator (Now Supports Perfect Arabic Alignment)
     private func generatePDF() {
-        let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595.2, height: 841.8))
+        let pageWidth: CGFloat = 595.2
+        let pageHeight: CGFloat = 841.8
+        let margin: CGFloat = 50.0
+        let contentWidth = pageWidth - (margin * 2)
+
+        let pdfRenderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
         let documentDirectory = FileManager.default.temporaryDirectory
         let pdfURL = documentDirectory.appendingPathComponent("\(child.name)_Attack_History.pdf")
+        
         let dateFmt = DateFormatter()
         dateFmt.dateStyle = .medium
-        let titleAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.boldSystemFont(ofSize: 24), .foregroundColor: UIColor.systemBlue]
-        let subtitleAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.boldSystemFont(ofSize: 16)]
-        let bodyAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12)]
-        let mutedAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: UIColor.gray]
-        let totalLine = String(format: NSLocalizedString("pdf_total_attacks", comment: ""), totalReadings)
-        let avgLine = String(format: NSLocalizedString("pdf_avg_spo2", comment: ""), avgSpO2 > 0 ? String(format: "%.1f%%", avgSpO2) : "—")
+        dateFmt.locale = language == "Arabic" ? Locale(identifier: "ar") : Locale(identifier: "en")
+        
+        // 1. Force Right-to-Left alignment if language is Arabic
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = language == "Arabic" ? .right : .left
+        
+        // 2. Inject the alignment into our text attributes
+        let titleAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.boldSystemFont(ofSize: 24), .foregroundColor: UIColor.systemBlue, .paragraphStyle: paragraphStyle]
+        let subtitleAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.boldSystemFont(ofSize: 16), .paragraphStyle: paragraphStyle]
+        let bodyAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12), .paragraphStyle: paragraphStyle]
+        let mutedAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12), .foregroundColor: UIColor.gray, .paragraphStyle: paragraphStyle]
+        
+        let totalLine = String(format: localizedText("pdf_total_attacks"), totalReadings)
+        let avgLine = String(format: localizedText("pdf_avg_spo2"), avgSpO2 > 0 ? String(format: "%.1f%%", avgSpO2) : "—")
 
         do {
             try pdfRenderer.writePDF(to: pdfURL) { context in
                 context.beginPage()
-                let titleString = "\(child.name) - \(NSLocalizedString("history_nav_title", comment: ""))"
-                titleString.draw(at: CGPoint(x: 50, y: 50), withAttributes: titleAttrs)
-                let dateString = String(format: NSLocalizedString("pdf_generated_on", comment: ""), dateFmt.string(from: Date()))
-                dateString.draw(at: CGPoint(x: 50, y: 85), withAttributes: mutedAttrs)
-                var y: CGFloat = 120
-                NSLocalizedString("pdf_title_summary", comment: "").draw(at: CGPoint(x: 50, y: y), withAttributes: subtitleAttrs)
+                var y: CGFloat = 50
+                
+                // 3. Use `draw(in: CGRect)` instead of `draw(at:)` so the alignment actually applies
+                let titleString = "\(child.name) - \(localizedText("history_nav_title"))"
+                titleString.draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 35), withAttributes: titleAttrs)
+                y += 35
+                
+                let dateString = String(format: localizedText("pdf_generated_on"), dateFmt.string(from: Date()))
+                dateString.draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 20), withAttributes: mutedAttrs)
+                y += 35
+                
+                localizedText("pdf_title_summary").draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 25), withAttributes: subtitleAttrs)
                 y += 25
-                totalLine.draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
+                
+                totalLine.draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 20), withAttributes: bodyAttrs)
                 y += 20
-                avgLine.draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
+                
+                avgLine.draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 20), withAttributes: bodyAttrs)
                 y += 40
 
                 if !filteredEntries.isEmpty {
-                    NSLocalizedString("pdf_title_history", comment: "").draw(at: CGPoint(x: 50, y: y), withAttributes: subtitleAttrs)
+                    localizedText("pdf_title_history").draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 25), withAttributes: subtitleAttrs)
                     y += 25
+                    
                     for entry in filteredEntries {
-                        let dateTimeLine = "📅 " + String(format: NSLocalizedString("%@ at %@", comment: ""), entry.date, entry.time)
-                        let spO2Line  = "   • " + String(format: NSLocalizedString("pdf_entry_spo2", comment: ""), entry.spO2.map { "\($0)%" } ?? "—")
-                        let bpLine    = "   • " + String(format: NSLocalizedString("pdf_entry_bp", comment: ""), entry.bp ?? "—")
-                        let iaqLine   = "   • " + String(format: NSLocalizedString("pdf_entry_iaq", comment: ""), entry.iaq.map { "\($0)" } ?? "—")
-                        let peakLine  = "   • " + String(format: NSLocalizedString("pdf_entry_peak_flow", comment: ""), entry.peakFlow.map { "\($0)" } ?? "—")
+                        let dateTimeLine = "📅 " + String(format: localizedText("%@ at %@"), entry.date, entry.time)
+                        
+                        let spO2Val = entry.spO2.map { "\($0)%" } ?? "—"
+                        let bpVal = entry.bp ?? "—"
+                        let iaqVal = entry.iaq.map { "\($0)" } ?? "—"
+                        let peakVal = entry.peakFlow.map { "\($0)" } ?? "—"
+                        
+                        let spO2Line  = "• " + String(format: localizedText("pdf_entry_spo2"), spO2Val)
+                        let bpLine    = "• " + String(format: localizedText("pdf_entry_bp"), bpVal)
+                        let iaqLine   = "• " + String(format: localizedText("pdf_entry_iaq"), iaqVal)
+                        let peakLine  = "• " + String(format: localizedText("pdf_entry_peak_flow"), peakVal)
+                        
                         let block = [dateTimeLine, spO2Line, bpLine, iaqLine, peakLine].joined(separator: "\n")
-                        block.draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
-                        y += 80
-                        if y > 750 {
+                        block.draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 100), withAttributes: bodyAttrs)
+                        
+                        y += 110
+                        if y > 730 {
                             context.beginPage()
                             y = 50
                         }
                     }
                 } else {
-                    NSLocalizedString("pdf_no_data", comment: "").draw(at: CGPoint(x: 50, y: y), withAttributes: bodyAttrs)
+                    localizedText("pdf_no_data").draw(in: CGRect(x: margin, y: y, width: contentWidth, height: 60), withAttributes: bodyAttrs)
                 }
             }
             self.pdfURL = pdfURL
@@ -270,11 +311,13 @@ struct PDFPreviewView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
-                        Button(NSLocalizedString("pdf_preview_close", comment: "")) { dismiss() }
+                        Button { dismiss() } label: {
+                            Text(LocalizedStringKey("pdf_preview_close"))
+                        }
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
                         ShareLink(item: url) {
-                            Label(NSLocalizedString("pdf_preview_share", comment: ""), systemImage: "square.and.arrow.up")
+                            Label(LocalizedStringKey("pdf_preview_share"), systemImage: "square.and.arrow.up")
                         }
                     }
                 }

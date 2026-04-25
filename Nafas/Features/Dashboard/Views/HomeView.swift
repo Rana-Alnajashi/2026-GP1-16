@@ -1,9 +1,6 @@
 import SwiftUI
 import Combine
 
-
-
-
 // MARK: - HomeView
 struct HomeView: View {
     @Binding var showSignInView: Bool
@@ -47,7 +44,6 @@ struct HomeView: View {
             .navigationDestination(for: ChildModel.self) { child in
                 ChildDetailView(child: child)
             }
-            // Buttons moved here to match ChildDetailView location
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 16) {
@@ -103,6 +99,9 @@ struct HomeContentView: View {
     @ObservedObject var store: NafasStore
     @ObservedObject var userManager = UserProfileManager.shared
     @Binding var showAddChild: Bool
+    
+    // 🚀 NEW: Listen to your language toggle!
+    @AppStorage("nafas_language") private var language = "English"
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -152,10 +151,10 @@ struct HomeContentView: View {
                 HStack(spacing: 10) {
                     Image(systemName: vm.weather.sfSymbol)
                         .font(.system(size: 22)).foregroundStyle(.white.opacity(0.9))
-                    Text(vm.weather.condition)
+                    Text(LocalizedStringKey(vm.weather.condition))
                         .font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
                 }
-                Text(vm.weather.advice)
+                Text(LocalizedStringKey(vm.weather.advice))
                     .font(.system(size: 14)).foregroundStyle(.white.opacity(0.85)).lineLimit(3)
             }
             .padding(18)
@@ -170,9 +169,9 @@ struct HomeContentView: View {
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Color.nafasTextPrimary)
                 Spacer()
-                Text(String.localizedStringWithFormat(NSLocalizedString("home_children_count %lld", comment: ""), store.children.count))
-                    .font(.nafasCaption())
-                    .foregroundStyle(Color.nafasTextMuted)
+                
+                // 🚀 FIX: Use our new helper function
+                Text(childrenCountLabel(store.children.count))
                     .font(.nafasCaption())
                     .foregroundStyle(Color.nafasTextMuted)
             }
@@ -219,10 +218,11 @@ struct HomeContentView: View {
                     Text(child.name)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color.nafasTextPrimary)
-                    Text(LocalizedStringKey("child_age_years_old %d"))
+                    
+                    // 🚀 FIX: Use our new helper function
+                    Text(ageLabel(child.age))
                         .font(.nafasCaption())
                         .foregroundStyle(Color.nafasTextMuted)
-                    StatusBadge(status: child.isConnected ? .connected : .noDevice)
                 }
                 Spacer()
 
@@ -268,6 +268,35 @@ struct HomeContentView: View {
                     .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6]))
                     .foregroundStyle(Color.nafasPrimary.opacity(0.5))
             )
+        }
+    }
+    
+    // MARK: - 🚀 Perfect Arabic Plural Helpers
+    private func childrenCountLabel(_ count: Int) -> String {
+        if language == "Arabic" {
+            switch count {
+            case 0: return "لا يوجد أطفال"
+            case 1: return "طفل واحد"
+            case 2: return "طفلان"
+            case 3...10: return "\(count) أطفال"
+            default: return "\(count) طفلاً"
+            }
+        } else {
+            return count == 1 ? "1 child" : "\(count) children"
+        }
+    }
+
+    private func ageLabel(_ age: Int) -> String {
+        if language == "Arabic" {
+            switch age {
+            case 0: return "أقل من سنة"
+            case 1: return "سنة واحدة"
+            case 2: return "سنتان"
+            case 3...10: return "\(age) سنوات"
+            default: return "\(age) سنة"
+            }
+        } else {
+            return "\(age) years old"
         }
     }
 }
@@ -410,7 +439,7 @@ struct SideMenuView: View {
 
 // MARK: - Notifications View
 struct AppNotification: Identifiable {
-    let id = UUID()
+    let id: String
     let icon: String
     let iconColor: Color
     let titleKey: String
@@ -421,32 +450,69 @@ struct AppNotification: Identifiable {
 
 struct NotificationsView: View {
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var store = NafasStore.shared
+    @AppStorage("nafas_language") private var language = "English"
+    
+    @State private var dismissedNotifications: Set<String> = []
 
-    private let notifications: [AppNotification] = [
-        AppNotification(
-            icon: "exclamationmark.triangle.fill",
-            iconColor: Color.nafasDanger,
-            titleKey: "notif_attack_title",
-            bodyKey: "notif_attack_body",
-            timeKey: "notif_time_now",
-            isAlert: true
-        ),
-        AppNotification(
-            icon: "wind",
-            iconColor: Color.nafasPrimary,
-            titleKey: "notif_weather_title",
-            bodyKey: "notif_weather_body",
-            timeKey: "notif_time_1h",
-            isAlert: false
-        )
-    ]
+    private var notifications: [AppNotification] {
+        var activeNotifs: [AppNotification] = []
+        
+        for child in store.children {
+            let alertId = "spo2_\(child.id.uuidString)"
+            if let vitals = store.latestVitals[child.id.uuidString], vitals.spO2Status == .low {
+                if !dismissedNotifications.contains(alertId) {
+                    activeNotifs.append(
+                        AppNotification(
+                            id: alertId,
+                            icon: "exclamationmark.triangle.fill",
+                            iconColor: Color.nafasDanger,
+                            titleKey: "notif_attack_title",
+                            bodyKey: "notif_attack_body",
+                            timeKey: "vital_updated_just_now",
+                            isAlert: true
+                        )
+                    )
+                }
+            }
+        }
+        
+        let weatherId = "weather_today"
+        if !dismissedNotifications.contains(weatherId) {
+            activeNotifs.append(
+                AppNotification(
+                    id: weatherId,
+                    icon: "wind",
+                    iconColor: Color.nafasPrimary,
+                    titleKey: "Weather_Today",
+                    bodyKey: "Weather_Advice",
+                    timeKey: "notif_time_1h",
+                    isAlert: false
+                )
+            )
+        }
+        
+        return activeNotifs
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
-                    ForEach(notifications) { notif in
-                        notifRow(notif)
+                    if notifications.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "bell.slash")
+                                .font(.system(size: 40))
+                                .foregroundStyle(Color.nafasDivider)
+                            Text(LocalizedStringKey("history_empty_title"))
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.nafasTextMuted)
+                        }
+                        .padding(.top, 60)
+                    } else {
+                        ForEach(notifications) { notif in
+                            notifRow(notif)
+                        }
                     }
                 }
                 .padding(.horizontal, 20)
@@ -465,12 +531,12 @@ struct NotificationsView: View {
                 }
             }
         }
+        .environment(\.layoutDirection, language == "Arabic" ? .rightToLeft : .leftToRight)
     }
 
     @ViewBuilder
     private func notifRow(_ notif: AppNotification) -> some View {
         HStack(alignment: .top, spacing: 14) {
-            // Icon
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(notif.iconColor.opacity(0.12))
@@ -494,6 +560,19 @@ struct NotificationsView: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color.nafasTextMuted)
                     .fixedSize(horizontal: false, vertical: true)
+            }
+            
+            Button {
+                // 🚀 FIX: Swallowing the return value so the compiler doesn't crash!
+                withAnimation(.spring(response: 0.3)) {
+                    _ = dismissedNotifications.insert(notif.id)
+                }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Color.nafasTextMuted)
+                    .padding(.leading, 6)
+                    .padding(.top, 2)
             }
         }
         .padding(16)

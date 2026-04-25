@@ -14,6 +14,16 @@ struct ChildDetailView: View {
     @State private var menuOpen = false
     @Environment(\.dismiss) var dismiss
     
+    //  Language toggle & helper function
+    @AppStorage("nafas_language") private var language = "English"
+    
+    private func loc(_ key: String) -> String {
+        let langCode = language == "Arabic" ? "ar" : "en"
+        if let path = Bundle.main.path(forResource: langCode, ofType: "lproj"),
+           let bundle = Bundle(path: path) { return NSLocalizedString(key, bundle: bundle, comment: "") }
+        return NSLocalizedString(key, comment: "")
+    }
+    
     private var currentChild: ChildModel {
         store.children.first(where: { $0.id == child.id }) ?? child
     }
@@ -73,6 +83,7 @@ struct ChildDetailView: View {
             .offset(x: menuOpen ? 0 : UIScreen.main.bounds.width)
             .animation(.spring(response: 0.38, dampingFraction: 0.88), value: menuOpen)
         }
+        .environment(\.layoutDirection, language == "Arabic" ? .rightToLeft : .leftToRight)
         .sheet(isPresented: $showHealthHistory) { HealthHistoryView(child: currentChild) }
         .sheet(isPresented: $showAddPeakFlow)   { AddPeakFlowView(child: currentChild) }
         .sheet(isPresented: $showEditChild)      { EditChildView(child: currentChild) }
@@ -80,34 +91,22 @@ struct ChildDetailView: View {
             BluetoothConnectionView(child: child, isNewChild: false)
         }
         .alert(
-            String(format: NSLocalizedString("child_delete_title", comment: ""), child.name),
+            String(format: loc("child_delete_title"), child.name),
             isPresented: $showDeleteAlert
         ) {
-            Button(NSLocalizedString("child_delete_cancel",  comment: ""), role: .cancel) { }
-            Button(NSLocalizedString("child_delete_confirm", comment: ""), role: .destructive) {
+            Button(loc("child_delete_cancel"), role: .cancel) { }
+            Button(loc("child_delete_confirm"), role: .destructive) {
                 store.deleteChild(child.id.uuidString)
                 dismiss()
             }
         } message: {
             Text(LocalizedStringKey("child_delete_message"))
         }
-        // 👇 FINAL HACK FORCED HERE 👇
         .onAppear {
-                    // ONLY connect to MQTT if this specific child is connected to a wristband
-                    if child.isConnected, let deviceID = child.deviceID {
-                        NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
-                    }
-                }
-                .onChange(of: child.isConnected) { oldValue, newValue in
-                    if newValue, let deviceID = child.deviceID {
-                        NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
-                    } else {
-                        NafasMQTTManager.shared.disconnect()
-                    }
-                }
-                .onDisappear {
-                    NafasMQTTManager.shared.disconnect()
-                }
+            if child.isConnected, let deviceID = child.deviceID {
+                NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
+            }
+        }
         .onChange(of: child.isConnected) { oldValue, newValue in
             if newValue, let deviceID = child.deviceID {
                 NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
@@ -118,7 +117,6 @@ struct ChildDetailView: View {
         .onDisappear {
             NafasMQTTManager.shared.disconnect()
         }
-        // 👆 END OF MQTT HOOKS 👆
     }
 
     private func toggleMenu() {
@@ -134,13 +132,13 @@ struct ChildDetailView: View {
 
                 if let v = vitals, v.spO2Status == .low, !dismissedAlerts.contains(spO2AlertId) {
                     alertBanner(
-                        message: String(format: NSLocalizedString("alert_spo2_dropped", comment: ""), v.spO2, child.name),
+                        message: String(format: loc("alert_spo2_dropped"), v.spO2, child.name),
                         alertId: spO2AlertId
                     )
                 }
                 if let v = vitals, v.peakZone == .red, !dismissedAlerts.contains(peakAlertId) {
                     alertBanner(
-                        message: String(format: NSLocalizedString("alert_peak_red_zone", comment: ""), v.peakFlow),
+                        message: String(format: loc("alert_peak_red_zone"), v.peakFlow),
                         alertId: peakAlertId
                     )
                 }
@@ -177,7 +175,7 @@ struct ChildDetailView: View {
                             icon: "drop.fill", iconColor: Color.nafasPrimary, iconBg: Color.nafasPrimary.opacity(0.12),
                             title: "SpO2",
                             value: "\(v.spO2)%",
-                            unit: NSLocalizedString("vital_oxygen_unit", comment: ""),
+                            unit: loc("vital_oxygen_unit"),
                             status: spO2StatusLabel(v.spO2Status),
                             statusColor: statusColor(v.spO2Status)
                         )
@@ -232,14 +230,14 @@ struct ChildDetailView: View {
                                 Image(systemName: "heart.fill")
                                     .font(.system(size: 16))
                                     .foregroundStyle(.red)
-                                Text("Heart Rate")
+                                Text(LocalizedStringKey("Heart Rate"))
                                     .font(.system(size: 13))
                                     .foregroundStyle(Color.nafasTextMuted)
                             }
                             Text("---")
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(Color.nafasTextMuted)
-                            Text("bpm")
+                            Text(LocalizedStringKey("bpm"))
                                 .font(.system(size: 12))
                                 .foregroundStyle(Color.nafasTextMuted)
                             Text(LocalizedStringKey("disconnected_no_data"))
@@ -342,8 +340,8 @@ struct ChildDetailView: View {
                 )
                 emptyVitalCard(
                     icon: "drop.fill",
-                    title: NSLocalizedString("disconnected_spo2_title", comment: ""),
-                    unit: NSLocalizedString("disconnected_spo2_unit", comment: "")
+                    title: loc("disconnected_spo2_title"),
+                    unit: loc("disconnected_spo2_unit")
                 )
             }
             emptyIAQCard()
@@ -357,17 +355,17 @@ struct ChildDetailView: View {
                 Image(systemName: icon)
                     .font(.system(size: 16))
                     .foregroundStyle(icon == "heart.fill" ? .red : Color.nafasPrimary)
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 13))
                     .foregroundStyle(Color.nafasTextMuted)
             }
             Text("---")
                 .font(.system(size: 28, weight: .bold))
                 .foregroundStyle(Color.nafasTextMuted)
-            Text(unit)
+            Text(LocalizedStringKey(unit))
                 .font(.system(size: 12))
                 .foregroundStyle(Color.nafasTextMuted)
-            Text(NSLocalizedString("disconnected_no_data", comment: ""))
+            Text(loc("disconnected_no_data"))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Color.nafasTextMuted)
                 .padding(.horizontal, 10).padding(.vertical, 4)
@@ -438,9 +436,9 @@ struct ChildDetailView: View {
                         Image(systemName: "waveform.path.ecg").font(.system(size: 22)).foregroundStyle(zoneColor)
                     }
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(String(format: NSLocalizedString("peak_last_reading", comment: ""), latest.value))
+                        Text(String(format: loc("peak_last_reading"), latest.value))
                             .font(.system(size: 16, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
-                        Text(String(format: NSLocalizedString("%@ at %@", comment: ""), latest.date, latest.time))
+                        Text(String(format: loc("%@ at %@"), latest.date, latest.time))
                             .font(.nafasCaption()).foregroundStyle(Color.nafasTextMuted)
                         if !latest.note.isEmpty {
                             Text(latest.note)
@@ -488,7 +486,7 @@ struct ChildDetailView: View {
                 .foregroundStyle(Color.nafasDanger)
                 .multilineTextAlignment(.leading)
             Spacer()
-            Button { dismissedAlerts.insert(alertId) } label: {
+            Button { _ = dismissedAlerts.insert(alertId) } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(Color.nafasDanger)
@@ -555,9 +553,9 @@ struct ChildDetailView: View {
                 Text(LocalizedStringKey("wristband_connected_title"))
                     .font(.system(size: 15, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
                 Text(String(
-                    format: NSLocalizedString("wristband_device_sync", comment: ""),
-                    child.deviceID ?? NSLocalizedString("device_id_unknown", comment: ""),
-                    String(format: NSLocalizedString("wristband_last_sync", comment: ""), lastSync)
+                    format: loc("wristband_device_sync"),
+                    child.deviceID ?? loc("device_id_unknown"),
+                    String(format: loc("wristband_last_sync"), lastSync)
                 ))
                 .font(.nafasCaption()).foregroundStyle(Color.nafasTextMuted)
             }
@@ -581,13 +579,13 @@ struct ChildDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: icon).font(.system(size: 16)).foregroundStyle(iconColor)
-                Text(title).font(.system(size: 13)).foregroundStyle(Color.nafasTextMuted)
+                Text(LocalizedStringKey(title)).font(.system(size: 13)).foregroundStyle(Color.nafasTextMuted)
             }
             Text(value).font(.system(size: 28, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
-            Text(unit).font(.system(size: 12)).foregroundStyle(Color.nafasTextMuted)
+            Text(LocalizedStringKey(unit)).font(.system(size: 12)).foregroundStyle(Color.nafasTextMuted)
             HStack(spacing: 4) {
                 Circle().fill(statusColor).frame(width: 7, height: 7)
-                Text(status).font(.system(size: 12, weight: .semibold)).foregroundStyle(statusColor)
+                Text(LocalizedStringKey(status)).font(.system(size: 12, weight: .semibold)).foregroundStyle(statusColor)
             }
             .padding(.horizontal, 10).padding(.vertical, 4)
             .background(statusColor.opacity(0.10), in: Capsule())
@@ -600,10 +598,10 @@ struct ChildDetailView: View {
     private func iaqCard(_ v: VitalSnapshot) -> some View {
         let iaqColor: Color = v.iaqStatus == .good ? .nafasSuccess : v.iaqStatus == .moderate ? .nafasWarning : .nafasDanger
         let iaqLabel = v.iaqStatus == .good
-            ? NSLocalizedString("iaq_good",     comment: "")
+            ? loc("iaq_good")
             : v.iaqStatus == .moderate
-                ? NSLocalizedString("iaq_moderate", comment: "")
-                : NSLocalizedString("iaq_poor",     comment: "")
+                ? loc("iaq_moderate")
+                : loc("iaq_poor")
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 HStack(spacing: 8) {
@@ -619,7 +617,7 @@ struct ChildDetailView: View {
                 .padding(.horizontal, 12).padding(.vertical, 5)
                 .background(iaqColor.opacity(0.10), in: Capsule())
             }
-            Text(String(format: NSLocalizedString("iaq_value_format", comment: ""), v.iaq))
+            Text(String(format: loc("iaq_value_format"), v.iaq))
                 .font(.system(size: 24, weight: .bold)).foregroundStyle(Color.nafasTextPrimary)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -692,14 +690,14 @@ struct ChildDetailView: View {
         s == .normal ? .nafasSuccess : s == .low ? .nafasDanger : .nafasWarning
     }
     private func bpStatusLabel(_ s: VitalSnapshot.VitalStatus) -> String {
-        s == .normal ? NSLocalizedString("status_normal", comment: "") :
-        s == .low    ? NSLocalizedString("status_low",    comment: "") :
-                       NSLocalizedString("status_high",   comment: "")
+        s == .normal ? "status_normal" :
+        s == .low    ? "status_low" :
+                       "status_high"
     }
     private func spO2StatusLabel(_ s: VitalSnapshot.VitalStatus) -> String {
-        s == .normal ? NSLocalizedString("status_normal",      comment: "") :
-        s == .low    ? NSLocalizedString("status_low_warning", comment: "") :
-                       NSLocalizedString("status_high",        comment: "")
+        s == .normal ? "status_normal" :
+        s == .low    ? "status_low_warning" :
+                       "status_high"
     }
 }
 
@@ -715,14 +713,19 @@ struct ChildSideMenuView: View {
     @ObservedObject var userManager = UserProfileManager.shared
     @AppStorage("nafas_dark_mode") private var darkMode = false
     @AppStorage("nafas_language") private var language = "English"
+    
+    private func loc(_ key: String) -> String {
+        let langCode = language == "Arabic" ? "ar" : "en"
+        if let path = Bundle.main.path(forResource: langCode, ofType: "lproj"),
+           let bundle = Bundle(path: path) { return NSLocalizedString(key, bundle: bundle, comment: "") }
+        return NSLocalizedString(key, comment: "")
+    }
 
     private var userName: String { userManager.displayName ?? child.name }
     private var initial: String  { String(userName.prefix(1)).uppercased() }
 
     private var localizedLanguageLabel: String {
-        language == "English"
-            ? NSLocalizedString("English", comment: "")
-            : NSLocalizedString("Arabic",  comment: "")
+        language == "English" ? loc("English") : loc("Arabic")
     }
 
     private func close() {
@@ -763,7 +766,7 @@ struct ChildSideMenuView: View {
                         Text(child.name)
                             .font(.system(size: 17, weight: .bold))
                             .foregroundStyle(Color.nafasTextPrimary)
-                        Text(String(format: NSLocalizedString("child_age_years_old", comment: ""), child.age))
+                        Text(ageLabel(child.age))
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Color.nafasPrimary)
                             .padding(.horizontal, 10).padding(.vertical, 3)
@@ -804,7 +807,7 @@ struct ChildSideMenuView: View {
 
                 Spacer()
 
-                Text(NSLocalizedString("Nafas v1.0.0", comment: "App version footer"))
+                Text(loc("Nafas v1.0.0"))
                     .font(.system(size: 12))
                     .foregroundStyle(Color.nafasTextMuted)
                     .frame(maxWidth: .infinity)
@@ -898,4 +901,18 @@ struct ChildSideMenuView: View {
                 .foregroundStyle(Color.nafasPrimary)
         }
     }
+    // MARK: - 🚀 Perfect Arabic Plural Helper
+        private func ageLabel(_ age: Int) -> String {
+            if language == "Arabic" {
+                switch age {
+                case 0: return "أقل من سنة"
+                case 1: return "سنة واحدة"
+                case 2: return "سنتان"
+                case 3...10: return "\(age) سنوات"
+                default: return "\(age) سنة"
+                }
+            } else {
+                return "\(age) years old"
+            }
+        }
 }

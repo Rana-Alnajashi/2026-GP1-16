@@ -40,6 +40,7 @@
     },
     "%@ at %@" : {
       "comment" : "Peak flow date + time",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -74,6 +75,7 @@
     },
     "%lld yrs" : {
       "comment" : "Child age short label",
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -277,6 +279,7 @@
       }
     },
     "alert_peak_red_zone" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -293,6 +296,7 @@
       }
     },
     "alert_spo2_dropped" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -341,6 +345,7 @@
       }
     },
     "Arabic" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -533,6 +538,7 @@
       }
     },
     "ble_connect_child_title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -661,6 +667,7 @@
       }
     },
     "ble_go_to_dashboard_child" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -672,6 +679,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Go to %@'s Dashboard"
+          }
+        }
+      }
+    },
+    "ble_invalid_wifi_credentials" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بيانات الواي فاي غير صالحة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid Wi-Fi credentials"
+          }
+        }
+      }
+    },
+    "ble_no_devices_found" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يتم العثور على أجهزة قريبة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No devices found nearby"
           }
         }
       }
@@ -789,6 +830,7 @@
       }
     },
     "ble_select_device_for_child" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -869,6 +911,7 @@
       }
     },
     "ble_status_bluetooth" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -885,6 +928,7 @@
       }
     },
     "ble_status_paired" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -901,6 +945,7 @@
       }
     },
     "ble_status_wifi" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -917,6 +962,7 @@
       }
     },
     "ble_status_wristband" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -949,6 +995,7 @@
       }
     },
     "ble_success_body" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1076,6 +1123,23 @@
         }
       }
     },
+    "ble_wifi_ssid_label" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم الشبكة (SSID)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network Name (SSID)"
+          }
+        }
+      }
+    },
     "ble_wifi_ssid_placeholder" : {
       "localizations" : {
         "ar" : {
@@ -1141,6 +1205,7 @@
       }
     },
     "bt_step1_desc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1157,6 +1222,7 @@
       }
     },
     "bt_step1_title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1173,6 +1239,7 @@
       }
     },
     "bt_step2_desc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1189,6 +1256,7 @@
       }
     },
     "bt_step2_title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1205,6 +1273,7 @@
       }
     },
     "bt_step3_desc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1221,6 +1290,7 @@
       }
     },
     "bt_step3_title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1269,6 +1339,7 @@
       }
     },
     "child_age_years_old" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -1353,6 +1424,7 @@
       }
     },
     "child_delete_cancel" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1369,6 +1441,7 @@
       }
     },
     "child_delete_confirm" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1401,6 +1474,7 @@
       }
     },
     "child_delete_title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1508,6 +1582,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Height (cm)"
+          }
+        }
+      }
+    },
+    "child_menu_delete" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف الطفل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Child"
+          }
+        }
+      }
+    },
+    "child_menu_edit_info" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل معلومات الطفل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Child Info"
+          }
+        }
+      }
+    },
+    "child_menu_health_history" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السجل الصحي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health History"
           }
         }
       }
@@ -1641,6 +1766,7 @@
       }
     },
     "device_id_unknown" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1849,6 +1975,7 @@
       }
     },
     "English" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1976,6 +2103,40 @@
         }
       }
     },
+    "Father" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Father"
+          }
+        }
+      }
+    },
+    "Female" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أنثى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Female"
+          }
+        }
+      }
+    },
     "Full Name" : {
       "localizations" : {
         "ar" : {
@@ -1992,6 +2153,23 @@
         }
       }
     },
+    "Grandparent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جد / جدة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grandparent"
+          }
+        }
+      }
+    },
     "Heart Rate" : {
       "localizations" : {
         "ar" : {
@@ -2004,6 +2182,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Heart Rate"
+          }
+        }
+      }
+    },
+    "High" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مرتفع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "High"
           }
         }
       }
@@ -2168,6 +2363,57 @@
         }
       }
     },
+    "history_tab_month" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الشهر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This Month"
+          }
+        }
+      }
+    },
+    "history_tab_today" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اليوم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        }
+      }
+    },
+    "history_tab_week" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الأسبوع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This Week"
+          }
+        }
+      }
+    },
     "history_total_alerts_label" : {
       "localizations" : {
         "ar" : {
@@ -2201,6 +2447,7 @@
       }
     },
     "home_children_count" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "variations" : {
@@ -2296,6 +2543,57 @@
         }
       }
     },
+    "home_good_afternoon" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مساء الخير،"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good afternoon,"
+          }
+        }
+      }
+    },
+    "home_good_evening" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مساء النور،"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good evening,"
+          }
+        }
+      }
+    },
+    "home_good_morning" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صباح الخير،"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good morning,"
+          }
+        }
+      }
+    },
     "home_my_children" : {
       "localizations" : {
         "ar" : {
@@ -2361,6 +2659,7 @@
       }
     },
     "iaq_good" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2377,6 +2676,7 @@
       }
     },
     "iaq_moderate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2393,6 +2693,7 @@
       }
     },
     "iaq_poor" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2457,6 +2758,7 @@
       }
     },
     "iaq_value_format" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2548,6 +2850,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Log out"
+          }
+        }
+      }
+    },
+    "Low" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "منخفض"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low"
+          }
+        }
+      }
+    },
+    "Male" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذكر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Male"
           }
         }
       }
@@ -2680,6 +3016,23 @@
         }
       }
     },
+    "Mother" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mother"
+          }
+        }
+      }
+    },
     "Nafas v1.0.0" : {
       "comment" : "App version footer",
       "localizations" : {
@@ -2697,6 +3050,57 @@
         }
       }
     },
+    "Normal" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طبيعي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "notif_attack_body" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انخفض مستوى الأكسجين عن الحد الآمن."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SpO₂ has dropped below safe levels."
+          }
+        }
+      }
+    },
+    "notif_attack_title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ تنبيه ربو"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⚠️ Asthma Alert"
+          }
+        }
+      }
+    },
     "notif_nav_title" : {
       "localizations" : {
         "ar" : {
@@ -2709,6 +3113,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "notif_time_1h" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "منذ ساعة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1h ago"
+          }
+        }
+      }
+    },
+    "notif_time_now" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآن"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Just now"
+          }
+        }
+      }
+    },
+    "Other" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخرى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other"
           }
         }
       }
@@ -2826,6 +3281,7 @@
       }
     },
     "pdf_avg_spo2" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2842,6 +3298,7 @@
       }
     },
     "pdf_entry_bp" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2858,6 +3315,7 @@
       }
     },
     "pdf_entry_iaq" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2874,6 +3332,7 @@
       }
     },
     "pdf_entry_peak_flow" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2890,6 +3349,7 @@
       }
     },
     "pdf_entry_spo2" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2906,6 +3366,7 @@
       }
     },
     "pdf_generated_on" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2922,6 +3383,7 @@
       }
     },
     "pdf_no_data" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2986,6 +3448,7 @@
       }
     },
     "pdf_title_history" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3002,6 +3465,7 @@
       }
     },
     "pdf_title_summary" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3018,6 +3482,7 @@
       }
     },
     "pdf_total_attacks" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3066,6 +3531,7 @@
       }
     },
     "peak_last_reading" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3194,6 +3660,7 @@
       }
     },
     "peak_zone_green" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3210,6 +3677,7 @@
       }
     },
     "peak_zone_green_desc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3226,6 +3694,7 @@
       }
     },
     "peak_zone_green_label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3242,6 +3711,7 @@
       }
     },
     "peak_zone_none_label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3258,6 +3728,7 @@
       }
     },
     "peak_zone_red" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3274,6 +3745,7 @@
       }
     },
     "peak_zone_red_desc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3290,6 +3762,7 @@
       }
     },
     "peak_zone_red_label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3322,6 +3795,7 @@
       }
     },
     "peak_zone_yellow" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3338,6 +3812,7 @@
       }
     },
     "peak_zone_yellow_desc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3354,6 +3829,7 @@
       }
     },
     "peak_zone_yellow_label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3433,6 +3909,23 @@
         }
       }
     },
+    "Sibling" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخ / أخت"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sibling"
+          }
+        }
+      }
+    },
     "Sign-In Methods" : {
       "localizations" : {
         "ar" : {
@@ -3450,6 +3943,7 @@
       }
     },
     "status_high" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3466,6 +3960,7 @@
       }
     },
     "status_low" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3482,6 +3977,7 @@
       }
     },
     "status_low_warning" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3498,6 +3994,7 @@
       }
     },
     "status_normal" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3550,7 +4047,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "الذروة ل/د"
+            "value" : "Peak  ل/د"
           }
         },
         "en" : {
@@ -3738,6 +4235,7 @@
       }
     },
     "vital_oxygen_unit" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3786,6 +4284,7 @@
       }
     },
     "Weather_Advice" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3802,6 +4301,7 @@
       }
     },
     "Weather_Today" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3862,6 +4362,7 @@
       }
     },
     "wristband_device_sync" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3878,6 +4379,7 @@
       }
     },
     "wristband_last_sync" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

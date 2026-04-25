@@ -6,10 +6,7 @@ import UserNotifications
 @main
 struct NafasApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    
-    // 🚀 Notice: The init() block is completely removed from here!
-    
-    var body: some Scene {
+      var body: some Scene {
         WindowGroup {
             SplashView()
         }
