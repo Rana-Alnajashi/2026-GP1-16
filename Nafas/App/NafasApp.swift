@@ -6,27 +6,25 @@ import UserNotifications
 @main
 struct NafasApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    @AppStorage("nafas_language") private var language = "English"
       var body: some Scene {
         WindowGroup {
             SplashView()
+                            .environment(\.layoutDirection, language == "Arabic" ? .rightToLeft : .leftToRight)
+                            .environment(\.locale, Locale(identifier: language == "Arabic" ? "ar" : "en"))
+                    }
         }
     }
-}
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        
-        // 1. Wake up Firebase FIRST
+
         FirebaseApp.configure()
-        
-        // 2. 🚀 NOW it is completely safe to clear the ghost Keychain logins!
         if UserDefaults.standard.bool(forKey: "hasRunBefore") == false {
             try? Auth.auth().signOut()
             UserDefaults.standard.set(true, forKey: "hasRunBefore")
         }
-        
-        // 3. Continue with Notifications
         UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
         return true

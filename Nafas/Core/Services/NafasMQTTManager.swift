@@ -78,9 +78,9 @@ class NafasMQTTManager: ObservableObject {
                     let spo2 = json["spo2"] as? Int ?? 0
                     let iaq = json["iaq"] as? Double ?? 0.0
                     
-                    let bpStatus: VitalSnapshot.VitalStatus = (bpm < 60 || bpm > 120) ? .high : .normal
-                    let spo2Status: VitalSnapshot.VitalStatus = spo2 < 95 ? .low : .normal
-                    let iaqStatus: VitalSnapshot.IAQStatus = iaq > 150 ? .poor : (iaq > 100 ? .moderate : .good)
+                    let bpStatus: VitalSnapshot.VitalStatus = bpm < 70 ? .low : (bpm > 110 ? .high : .normal)
+                    let spo2Status: VitalSnapshot.VitalStatus = spo2 < 92 ? .low : .normal
+                    let iaqStatus: VitalSnapshot.IAQStatus = iaq > 101 ? .poor : (iaq <= 100 ? .moderate : .good) // check
                     
                     let existingVitals = NafasStore.shared.latestVitals[childID]
                     

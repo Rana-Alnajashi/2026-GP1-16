@@ -1,7 +1,7 @@
 import SwiftUI
 import PhotosUI
 
-struct EditChildView: View{
+struct EditChildView: View {
     let child: ChildModel
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var store = NafasStore.shared
@@ -17,15 +17,22 @@ struct EditChildView: View{
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showPhotoPicker = false
     @State private var isSaving = false
-    @State private var emergencyPhoneNumbers: [String]
+    
+    // 1. The main array holding the saved contacts
+    @State private var emergencyContacts: [EmergencyContact] = []
+
+    // 2. Temporary variables for the "Add New" form
+    @State private var newContactName: String = ""
+    @State private var newContactPhone: String = ""
+    @AppStorage("nafas_language") private var language = "English"
     
     private let avatarColors = ["#1F6FEB", "#E0478A", "#34C759", "#AF52DE"]
     
     // NEW VALIDATION
     private var arePhonesValid: Bool {
-        let activePhones = emergencyPhoneNumbers.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        if activePhones.isEmpty { return true }
-        return activePhones.allSatisfy { $0.count == 9 }
+        if emergencyContacts.isEmpty { return true }
+        // Ensure all saved contacts have exactly 9 digits
+        return emergencyContacts.allSatisfy { $0.phoneNumber.count == 9 }
     }
     
     init(child: ChildModel) {
@@ -37,7 +44,10 @@ struct EditChildView: View{
         _gender = State(initialValue: child.gender)
         _relationship = State(initialValue: child.guardianRelationship)
         _selectedColor = State(initialValue: child.avatarColor)
-        _emergencyPhoneNumbers = State(initialValue: child.emergencyPhoneNumbers.isEmpty ? [""] : child.emergencyPhoneNumbers)
+        
+        // Initialize with the new data model
+        _emergencyContacts = State(initialValue: child.emergencyContacts)
+        
         if let imageData = child.avatarImageData {
             _selectedAvatarImage = State(initialValue: UIImage(data: imageData))
         }
@@ -186,47 +196,58 @@ struct EditChildView: View{
                             }
                         }
                         
-                        // Emergency Phone Numbers
-                        VStack(alignment: .leading, spacing: 8) {
+                        // MARK: - Emergency Contacts Section
+                        VStack(alignment: .leading, spacing: 12) {
                             Text(LocalizedStringKey("child_emergency_phone_label"))
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(Color.nafasTextPrimary)
                             
-                            ForEach(emergencyPhoneNumbers.indices, id: \.self) { idx in
-                                HStack(spacing: 8) {
-                                    Image(systemName: "phone.fill")
-                                        .foregroundStyle(Color.nafasPrimary)
-                                        .frame(width: 20)
-                                    
-                                    TextField(NSLocalizedString("child_emergency_phone_placeholder", comment: ""), text: $emergencyPhoneNumbers[idx])
-                                        .keyboardType(.numberPad)
-                                        .font(.nafasBody())
-                                        .onChange(of: emergencyPhoneNumbers[idx]) { oldValue, newValue in
-                                            var filtered = newValue.filter { "0123456789".contains($0) }
-                                            if filtered.count > 9 {
-                                                filtered = String(filtered.prefix(9))
+                            // 1. Existing Contacts List
+                            if !emergencyContacts.isEmpty {
+                                VStack(spacing: 10) {
+                                    ForEach(emergencyContacts) { contact in
+                                        HStack(spacing: 12) {
+                                            ZStack {
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .fill(Color.nafasPrimary.opacity(0.10))
+                                                    .frame(width: 38, height: 38)
+                                                Image(systemName: "phone.fill")
+                                                    .font(.system(size: 16, weight: .medium))
+                                                    .foregroundStyle(Color.nafasPrimary)
                                             }
-                                            if emergencyPhoneNumbers[idx] != filtered {
-                                                emergencyPhoneNumbers[idx] = filtered
+                                            
+                                            VStack(alignment: .leading, spacing: 3) {
+                                                Text(contact.name)
+                                                    .font(.system(size: 15, weight: .medium))
+                                                    .foregroundStyle(Color.nafasTextPrimary)
+                                                Text(contact.phoneNumber)
+                                                    .font(.system(size: 13, weight: .regular))
+                                                    .foregroundStyle(Color.nafasTextMuted)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            Button {
+                                                withAnimation {
+                                                    emergencyContacts.removeAll { $0.id == contact.id }
+                                                }
+                                            } label: {
+                                                Image(systemName: "trash")
+                                                    .font(.system(size: 15, weight: .semibold))
+                                                    .foregroundStyle(Color.nafasDanger)
+                                                    .padding(8)
+                                                    .background(Color.nafasDanger.opacity(0.1), in: Circle())
                                             }
                                         }
-                                    
-                                    if emergencyPhoneNumbers.count > 1 {
-                                        Button {
-                                            emergencyPhoneNumbers.remove(at: idx)
-                                        } label: {
-                                            Image(systemName: "minus.circle.fill")
-                                                .foregroundStyle(Color.nafasDanger)
-                                        }
+                                        .padding(12)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color.nafasBackground)
+                                                .overlay(RoundedRectangle(cornerRadius: 12)
+                                                    .strokeBorder(Color.nafasDivider, lineWidth: 1))
+                                        )
                                     }
                                 }
-                                .padding(12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.nafasBackground)
-                                        .overlay(RoundedRectangle(cornerRadius: 12)
-                                            .strokeBorder(Color.nafasDivider, lineWidth: 1))
-                                )
                             }
                             
                             // WARNING MESSAGE
@@ -237,23 +258,84 @@ struct EditChildView: View{
                                     .padding(.top, 2)
                             }
                             
-                            if emergencyPhoneNumbers.count < 3 {
-                                Button {
-                                    emergencyPhoneNumbers.append("")
-                                } label: {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "plus.circle")
-                                        Text(LocalizedStringKey("child_add_emergency_phone"))
+                            // 2. Add New Contact Area
+                            if emergencyContacts.count < 3 {
+                                VStack(spacing: 12) {
+                                    NafasTextField(
+                                            labelKey: "contact_name_label",
+                                            placeholderKey: "contact_name_placeholder",
+                                            icon: "person.text.rectangle",
+                                            text: $newContactName
+                                        )                                        .font(.system(size: 15))
+                                        .padding(14)
+                                        .background(Color.nafasBackground, in: RoundedRectangle(cornerRadius: 12))
+                                    
+                                    NafasTextField(
+                                            labelKey: "child_emergency_phone",
+                                            placeholderKey: "child_emergency_phone_placeholder",
+                                            icon: "phone",
+                                            text: $newContactPhone
+                                        )                                        .font(.system(size: 15))
+                                        .keyboardType(.numberPad)
+                                        .padding(14)
+                                        .background(Color.nafasBackground, in: RoundedRectangle(cornerRadius: 12))
+                                        // Applies your specific 9-digit filtering logic to the new field
+                                        .onChange(of: newContactPhone) { oldValue, newValue in
+                                            var filtered = newValue.filter { "0123456789".contains($0) }
+                                            if filtered.count > 9 {
+                                                filtered = String(filtered.prefix(9))
+                                            }
+                                            if newContactPhone != filtered {
+                                                newContactPhone = filtered
+                                            }
+                                        }
+                                    
+                                    Button {
+                                        let cleanPhone = newContactPhone.filter { "0123456789".contains($0) }
+                                        let newContact = EmergencyContact(name: newContactName, phoneNumber: cleanPhone)
+                                        
+                                        withAnimation {
+                                            emergencyContacts.append(newContact)
+                                        }
+                                        
+                                        // Reset fields
+                                        newContactName = ""
+                                        newContactPhone = ""
+                                    } label: {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "plus.circle")
+                                            Text(LocalizedStringKey("child_add_emergency_phone"))
+                                        }
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(Color.nafasPrimary)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color.nafasPrimary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                                     }
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Color.nafasPrimary)
-                                    .padding(.top, 4)
+                                    .disabled(newContactName.trimmingCharacters(in: .whitespaces).isEmpty || newContactPhone.count < 9)
+                                    .opacity((newContactName.trimmingCharacters(in: .whitespaces).isEmpty || newContactPhone.count < 9) ? 0.5 : 1.0)
                                 }
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(Color.nafasDivider, style: StrokeStyle(lineWidth: 1, dash: [6]))
+                                )
+                                .padding(.top, 4)
                             }
                         }
                     }
                     
+                    // Save button
                     Button {
+                        if !newContactName.trimmingCharacters(in: .whitespaces).isEmpty && newContactPhone.count == 9 {
+                            let cleanPhone = newContactPhone.filter { "0123456789".contains($0) }
+                            let newContact = EmergencyContact(name: newContactName, phoneNumber: cleanPhone)
+                            
+                            // Ensure we don't exceed the 3 contact limit
+                            if emergencyContacts.count < 3 {
+                                emergencyContacts.append(newContact)
+                            }
+                        }
                         saveChanges()
                     } label: {
                         if isSaving {
@@ -264,7 +346,6 @@ struct EditChildView: View{
                                 .font(.system(size: 16, weight: .bold))
                         }
                     }
-                    // Validates exact 7 digits
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || !arePhonesValid || isSaving)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
@@ -296,7 +377,7 @@ struct EditChildView: View{
                     }
                 }
             }
-        }
+        }.environment(\.layoutDirection, language == "Arabic" ? .rightToLeft : .leftToRight)
     }
     
     @ViewBuilder
@@ -355,7 +436,10 @@ struct EditChildView: View{
             updated.guardianRelationship = relationship
             updated.avatarColor = selectedColor
             updated.avatarImageData = selectedAvatarImage?.jpegData(compressionQuality: 0.7)
-            updated.emergencyPhoneNumbers = emergencyPhoneNumbers.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            
+            // Assign the structured array directly
+            updated.emergencyContacts = emergencyContacts
+            
             store.updateChild(updated)
             isSaving = false
             dismiss()

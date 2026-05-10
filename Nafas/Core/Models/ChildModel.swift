@@ -15,7 +15,7 @@ struct ChildModel: Identifiable, Codable, Equatable, Hashable {
     var avatarColor: String
     var guardianRelationship: GuardianRelationship
     var avatarImageData: Data?  // This is Codable by default
-    var emergencyPhoneNumbers: [String]
+    var emergencyContacts: [EmergencyContact]
     
     
     enum Gender: String, Codable, CaseIterable {
@@ -134,4 +134,10 @@ enum ConnectionStatus {
     case connecting
     case connected
     case failed(String)
+}
+// MARK: - EmergencyContact
+struct EmergencyContact: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var name: String
+    var phoneNumber: String
 }

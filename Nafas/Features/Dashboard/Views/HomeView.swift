@@ -100,13 +100,13 @@ struct HomeContentView: View {
     @ObservedObject var userManager = UserProfileManager.shared
     @Binding var showAddChild: Bool
     
-    // 🚀 NEW: Listen to your language toggle!
+    @State private var childToConnect: ChildModel?
+    
     @AppStorage("nafas_language") private var language = "English"
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
-                Spacer().frame(height: 8)
                 header
                 weatherCard
                 childrenSection
@@ -115,6 +115,9 @@ struct HomeContentView: View {
             .padding(.horizontal, 20)
         }
         .background(Color.nafasBackground.ignoresSafeArea())
+        .sheet(item: $childToConnect) { child in
+            BluetoothConnectionView(child: child, isNewChild: false)
+        }
     }
 
     // MARK: Header
@@ -136,7 +139,7 @@ struct HomeContentView: View {
             }
             Spacer()
         }
-        .padding(.top, 12)
+        .padding(.top, -20)
     }
 
     // MARK: Weather card
@@ -170,7 +173,6 @@ struct HomeContentView: View {
                     .foregroundStyle(Color.nafasTextPrimary)
                 Spacer()
                 
-                // 🚀 FIX: Use our new helper function
                 Text(childrenCountLabel(store.children.count))
                     .font(.nafasCaption())
                     .foregroundStyle(Color.nafasTextMuted)
@@ -219,7 +221,6 @@ struct HomeContentView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color.nafasTextPrimary)
                     
-                    // 🚀 FIX: Use our new helper function
                     Text(ageLabel(child.age))
                         .font(.nafasCaption())
                         .foregroundStyle(Color.nafasTextMuted)
@@ -236,11 +237,15 @@ struct HomeContentView: View {
                                 .strokeBorder(Color.nafasPrimary.opacity(0.4), lineWidth: 1.5)
                         )
                 } else {
-                    Text(LocalizedStringKey("home_connect_button"))
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(Color.nafasPrimary, in: RoundedRectangle(cornerRadius: 10))
+                    Button {
+                        childToConnect = child
+                    } label: {
+                        Text(LocalizedStringKey("home_connect_button"))
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16).padding(.vertical, 8)
+                            .background(Color.nafasPrimary, in: RoundedRectangle(cornerRadius: 10))
+                    }
                 }
             }
             .padding(16)
@@ -271,7 +276,7 @@ struct HomeContentView: View {
         }
     }
     
-    // MARK: - 🚀 Perfect Arabic Plural Helpers
+    // MARK: - Perfect Arabic Plural Helpers
     private func childrenCountLabel(_ count: Int) -> String {
         if language == "Arabic" {
             switch count {
@@ -347,7 +352,7 @@ struct SideMenuView: View {
                             .background(Color.nafasPrimaryLight, in: Capsule())
                     }
                 }
-                .padding(.horizontal, 24).padding(.top, 60).padding(.bottom, 24)
+                .padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 24)
 
                 Divider().padding(.horizontal, 24)
 
@@ -563,7 +568,6 @@ struct NotificationsView: View {
             }
             
             Button {
-                // 🚀 FIX: Swallowing the return value so the compiler doesn't crash!
                 withAnimation(.spring(response: 0.3)) {
                     _ = dismissedNotifications.insert(notif.id)
                 }

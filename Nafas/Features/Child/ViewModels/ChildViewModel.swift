@@ -9,7 +9,10 @@ final class AddChildViewModel: ObservableObject {
     @Published var height = ""
     @Published var weight = ""
     @Published var relationship: ChildModel.GuardianRelationship = .mother
-    @Published var emergencyPhoneNumbers: [String] = [""]
+    
+    // 1. Changed from @State to @Published for the ViewModel
+    @Published var emergencyContacts: [EmergencyContact] = []
+    
     @Published var selectedColor = "#1F6FEB"
     @Published var selectedAvatarImage: UIImage?
     
@@ -19,10 +22,10 @@ final class AddChildViewModel: ObservableObject {
     let avatarColors = ["#1F6FEB", "#E0478A", "#34C759", "#AF52DE"]
     private let store = NafasStore.shared
     
+    // 2. Updated to validate the new EmergencyContact array
     var arePhonesValid: Bool {
-        let activePhones = emergencyPhoneNumbers.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        if activePhones.isEmpty { return true }
-        return activePhones.allSatisfy { $0.count == 9 }
+        if emergencyContacts.isEmpty { return true }
+        return emergencyContacts.allSatisfy { $0.phoneNumber.count == 9 }
     }
     
     var isValid: Bool {
@@ -31,7 +34,8 @@ final class AddChildViewModel: ObservableObject {
     
     func saveChild() {
         isSaving = true
-        let phones = emergencyPhoneNumbers.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        
+        // 3. Removed the old 'let phones = ...' string filtering logic
         
         let newChild = ChildModel(
             id: UUID(),
@@ -46,7 +50,7 @@ final class AddChildViewModel: ObservableObject {
             avatarColor: selectedColor,
             guardianRelationship: relationship,
             avatarImageData: selectedAvatarImage?.jpegData(compressionQuality: 0.7),
-            emergencyPhoneNumbers: phones
+            emergencyContacts: emergencyContacts // Pass the objects directly
         )
         
         store.addChild(newChild)

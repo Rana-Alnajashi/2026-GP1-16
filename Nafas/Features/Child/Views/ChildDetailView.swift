@@ -147,7 +147,7 @@ struct ChildDetailView: View {
                     wristbandCard(lastSync: v.lastSync)
                 }
 
-                if hasActiveAlert && !currentChild.emergencyPhoneNumbers.isEmpty {
+                if hasActiveAlert && !currentChild.emergencyContacts.isEmpty {
                     emergencyCallCard
                 }
 
@@ -502,45 +502,56 @@ struct ChildDetailView: View {
     }
 
     // MARK: - Emergency Call Card
-    private var emergencyCallCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                Image(systemName: "phone.fill").foregroundStyle(Color.nafasDanger)
-                Text(LocalizedStringKey("emergency_call_title"))
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color.nafasTextPrimary)
-            }
-            ForEach(currentChild.emergencyPhoneNumbers.filter { !$0.isEmpty }, id: \.self) { phone in
-                Button {
-                    let cleanPhone = phone.filter { "0123456789+".contains($0) }
-                    if let url = URL(string: "tel://\(cleanPhone)") {
-                        UIApplication.shared.open(url)
+        private var emergencyCallCard: some View {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 6) {
+                    Image(systemName: "phone.fill").foregroundStyle(Color.nafasDanger)
+                    Text(LocalizedStringKey("emergency_call_title"))
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.nafasTextPrimary)
+                }
+                
+                // Loop through the new EmergencyContact objects
+                ForEach(currentChild.emergencyContacts) { contact in
+                    Button {
+                        let cleanPhone = contact.phoneNumber.filter { "0123456789+".contains($0) }
+                        if let url = URL(string: "tel://\(cleanPhone)") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "phone.arrow.up.right")
+                                .font(.system(size: 15, weight: .semibold))
+                            
+                            // Display the contact's Name and Number stacked cleanly
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(contact.name)
+                                    .font(.system(size: 15, weight: .semibold))
+                                Text(contact.phoneNumber)
+                                    .font(.system(size: 13, weight: .regular))
+                                    .opacity(0.8) // Slightly fade the number so the name pops
+                            }
+                            
+                            Spacer()
+                            
+                            Text(LocalizedStringKey("emergency_call_button"))
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14).padding(.vertical, 7)
+                                .background(Color.nafasDanger, in: Capsule())
+                        }
+                        .foregroundStyle(Color.nafasDanger)
+                        .padding(12)
+                        .background(Color.nafasDanger.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.nafasDanger.opacity(0.3), lineWidth: 1))
                     }
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "phone.arrow.up.right")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text(phone)
-                            .font(.system(size: 15, weight: .semibold))
-                        Spacer()
-                        Text(LocalizedStringKey("emergency_call_button"))
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(Color.nafasDanger, in: Capsule())
-                    }
-                    .foregroundStyle(Color.nafasDanger)
-                    .padding(12)
-                    .background(Color.nafasDanger.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.nafasDanger.opacity(0.3), lineWidth: 1))
                 }
             }
+            .padding(14)
+            .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.nafasDanger.opacity(0.1), radius: 6, y: 2)
         }
-        .padding(14)
-        .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.nafasDanger.opacity(0.1), radius: 6, y: 2)
-    }
 
     private func wristbandCard(lastSync: String) -> some View {
         HStack(spacing: 14) {
@@ -780,16 +791,19 @@ struct ChildSideMenuView: View {
                 Divider().padding(.horizontal, 24)
 
                 VStack(spacing: 6) {
-                    if !child.emergencyPhoneNumbers.isEmpty {
-                        row(icon: "phone.fill", labelKey: "menu_emergency_call") {
-                            close()
-                            if let phone = child.emergencyPhoneNumbers.first {
-                                let cleanPhone = phone.filter { "0123456789+".contains($0) }
+                    // Replace your current emergency contacts block with this:
+                    if !child.emergencyContacts.isEmpty {
+                        ForEach(child.emergencyContacts) { contact in
+                            contactRow(name: contact.name, phone: contact.phoneNumber) {
+                                close()
+                                let cleanPhone = contact.phoneNumber.filter { "0123456789+".contains($0) }
                                 if let url = URL(string: "tel://\(cleanPhone)") {
                                     UIApplication.shared.open(url)
                                 }
                             }
                         }
+                        
+                        Divider().padding(.vertical, 8) // Optional: separates contacts from standard menu items
                     }
                     row(icon: "pencil",    labelKey: "child_menu_edit_info")      { close(); onEditChild() }
                     row(icon: "calendar",  labelKey: "child_menu_health_history") { close(); onHealthHistory() }
@@ -818,11 +832,11 @@ struct ChildSideMenuView: View {
     }
 
     @ViewBuilder
-    private func row(icon: String, labelKey: String, action: @escaping () -> Void) -> some View {
+    private func row(icon: String, labelKey: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
                 iconBox(icon)
-                Text(LocalizedStringKey(labelKey))
+                Text(labelKey)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Color.nafasTextPrimary)
                 Spacer()
@@ -915,4 +929,31 @@ struct ChildSideMenuView: View {
                 return "\(age) years old"
             }
         }
+    
+    
+    @ViewBuilder
+    private func contactRow(name: String, phone: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                iconBox("phone.fill")
+                
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(name)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.nafasTextPrimary)
+                    Text(phone)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(Color.nafasTextMuted)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "phone.arrow.up.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.nafasDanger) // Keeps the emergency context clear
+            }
+            .padding(.horizontal, 14).padding(.vertical, 13)
+            .background(Color.nafasBackground, in: RoundedRectangle(cornerRadius: 14))
+        }
+    }
 }
