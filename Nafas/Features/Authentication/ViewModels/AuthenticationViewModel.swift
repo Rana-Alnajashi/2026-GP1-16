@@ -5,7 +5,7 @@ import FirebaseFirestore
 
 @MainActor
 final class AuthenticationViewModel: ObservableObject {
-
+    
     // MARK: - Properties
     @Published var fullName: String = ""
     @Published var countryCode: String = "+966"
@@ -18,10 +18,10 @@ final class AuthenticationViewModel: ObservableObject {
     
     // 🚀 Tracks if the user clicked "New User" or "Existing Account"
     @Published var isRegistration: Bool = false
-
+    
     var fullPhoneNumber: String { "\(countryCode)\(localPhoneNumber)" }
     var isPhoneInputValid: Bool { localPhoneNumber.count >= 9 }
-
+    
     // MARK: - Google Sign-In
     func signInGoogle() async throws -> Bool {
         let helper = SignInGoogleHelper()
@@ -30,7 +30,7 @@ final class AuthenticationViewModel: ObservableObject {
         
         return try await processDatabase(authUser: result)
     }
-
+    
     // MARK: - Phone Auth
     func sendPhoneVerification() async {
         isPhoneAuthLoading = true
@@ -42,7 +42,7 @@ final class AuthenticationViewModel: ObservableObject {
         }
         isPhoneAuthLoading = false
     }
-
+    
     func verifyOTPAndSignIn() async throws -> Bool {
         guard let id = verificationID else { throw URLError(.badServerResponse) }
         let result = try await AuthenticationManager.shared.signInWithPhone(
@@ -57,6 +57,14 @@ final class AuthenticationViewModel: ObservableObject {
         let db = Firestore.firestore(database: "nafas")
         let parentRef = db.collection("parents").document(authUser.uid)
         let document = try await parentRef.getDocument()
+        
+        // 🚀 CRITICAL FIX: Always save the email locally immediately upon successful auth
+        if let email = authUser.email {
+            UserProfileManager.shared.email = email
+            print("🚨 DEBUG: Saved email to UserProfileManager: \(email)")
+        } else {
+            print("🚨 DEBUG: AuthUser did not contain an email!")
+        }
         
         if isRegistration {
             // 🟢 REGISTRATION FLOW

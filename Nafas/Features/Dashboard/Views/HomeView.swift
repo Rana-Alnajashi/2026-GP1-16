@@ -142,27 +142,33 @@ struct HomeContentView: View {
         .padding(.top, -20)
     }
 
-    // MARK: Weather card
-    private var weatherCard: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(LinearGradient(
-                    colors: [Color.nafasPrimary, Color.nafasPrimary.opacity(0.78)],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                ))
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 10) {
-                    Image(systemName: vm.weather.sfSymbol)
-                        .font(.system(size: 22)).foregroundStyle(.white.opacity(0.9))
-                    Text(LocalizedStringKey(vm.weather.condition))
-                        .font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
+    // MARK: - Minimal Weather Card
+        private var weatherCard: some View {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: vm.weatherIcon)
+                        .font(.system(size: 20, weight: .medium))
+                    
+                    HStack(spacing: 6) {
+                        Text(vm.weatherTitle) // Automatically translates
+                        Text("•")
+                        Text(vm.temperatureText)
+                    }
+                    .font(.system(size: 18, weight: .bold))
                 }
-                Text(LocalizedStringKey(vm.weather.advice))
-                    .font(.system(size: 14)).foregroundStyle(.white.opacity(0.85)).lineLimit(3)
+                .foregroundStyle(.white)
+                
+                Text(vm.parentAdvice) // Automatically translates
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(.white.opacity(0.95))
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(18)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(red: 0.17, green: 0.51, blue: 0.96))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-    }
 
     // MARK: Children section
     private var childrenSection: some View {

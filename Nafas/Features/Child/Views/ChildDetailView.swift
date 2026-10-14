@@ -5,6 +5,7 @@ import SwiftUI
 struct ChildDetailView: View {
     let child: ChildModel
     @ObservedObject private var store = NafasStore.shared
+    @ObservedObject private var mqttManager = NafasMQTTManager.shared
     @State private var showHealthHistory = false
     @State private var showAddPeakFlow = false
     @State private var showEditChild = false
@@ -103,10 +104,16 @@ struct ChildDetailView: View {
             Text(LocalizedStringKey("child_delete_message"))
         }
         .onAppear {
-            if child.isConnected, let deviceID = child.deviceID {
-                NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
-            }
-        }
+                    if child.isConnected, let deviceID = child.deviceID {
+                        NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
+                    } else if let safeEmail = UserProfileManager.shared.email?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                              safeEmail == "r18290230@gmail.com" {
+                        
+                        // 🚀 FORCE AWS CONNECTION FOR THE DEVELOPER SIMULATION
+                        print("🚨 DEBUG: Admin opened Demo Child. Forcing AWS MQTT Connection...")
+                        NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: "wristband_1")
+                    }
+                }
         .onChange(of: child.isConnected) { oldValue, newValue in
             if newValue, let deviceID = child.deviceID {
                 NafasMQTTManager.shared.connect(for: child.id.uuidString, deviceID: deviceID)
@@ -146,10 +153,44 @@ struct ChildDetailView: View {
                 if let v = vitals {
                     wristbandCard(lastSync: v.lastSync)
                 }
-
+                
+                // 🚀 START NEW AI ALERT CARD 🚀
+                                if let alert = mqttManager.latestMLAlert, (alert.userId == currentChild.id.uuidString || alert.userId == "default_user") {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        HStack {
+                                            Image(systemName: "sparkles")
+                                                .foregroundStyle(alert.status == "attack" ? Color.nafasDanger : Color.nafasSuccess)
+                                            Text("AI Status: \(alert.status.capitalized)")
+                                                .font(.system(size: 16, weight: .bold))
+                                                .foregroundStyle(alert.status == "attack" ? Color.nafasDanger : Color.nafasSuccess)
+                                            Spacer()
+                                            Text(alert.status.uppercased())
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundStyle(.white)
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 4)
+                                                .background(alert.status == "attack" ? Color.nafasDanger : Color.nafasSuccess, in: Capsule())
+                                        }
+                                    }
+                                    .padding(16)
+                                    .background(Color.nafasSurface, in: RoundedRectangle(cornerRadius: 16))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .strokeBorder(alert.status == "attack" ? Color.nafasDanger.opacity(0.6) : Color.nafasSuccess.opacity(0.6), lineWidth: 1.5)
+                                    )
+                                }
+                                // 🚀 END NEW AI ALERT CARD 🚀
                 if hasActiveAlert && !currentChild.emergencyContacts.isEmpty {
                     emergencyCallCard
                 }
+                // --------------------------- simulation
+                if UserProfileManager.shared.email == "r18290230@gmail.com" {
+                    // Assuming you have access to the viewModel, or you can
+                    // instantiate a temporary one for the action if you aren't passing it normally
+                    let simViewModel = ChildDetailViewModel(child: currentChild)
+                    adminSimulationPanel(viewModel: simViewModel)
+                }
+                 // ---------------------------simulation
 
                 HStack {
                     Text(LocalizedStringKey("vital_live_vitals"))
@@ -160,13 +201,14 @@ struct ChildDetailView: View {
                         .font(.nafasCaption())
                         .foregroundStyle(Color.nafasTextMuted)
                 }
-
+                
+                // ChildDetailView.swift: Declarative UI updating automatically
                 if let v = vitals {
                     HStack(spacing: 12) {
                         vitalCard(
                             icon: "heart.fill", iconColor: .red, iconBg: Color.red.opacity(0.12),
                             title: "Heart Rate",
-                            value: v.bp,
+                            value: v.bp,    // Automatically binds to 88
                             unit: "bpm",
                             status: bpStatusLabel(v.bpStatus),
                             statusColor: statusColor(v.bpStatus)
@@ -200,7 +242,17 @@ struct ChildDetailView: View {
     private var disconnectedView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
-
+                
+                // 🚀 1. ADD THE SIMULATION PANEL HERE 🚀
+                                // Using the safe, lowercase email check we discussed
+                                if let safeEmail = UserProfileManager.shared.email?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                                   safeEmail == "r18290230@gmail.com" {
+                                   
+                                    let simViewModel = ChildDetailViewModel(child: currentChild)
+                                    adminSimulationPanel(viewModel: simViewModel)
+                                }
+                                // ----------------------------------------
+                
                 Button {
                     showBluetoothConnection = true
                 } label: {
@@ -957,3 +1009,74 @@ struct ChildSideMenuView: View {
         }
     }
 }
+
+// ---------------------------simulation
+// MARK: - Admin Simulation Panel
+extension ChildDetailView {
+    
+    @ViewBuilder
+    private func adminSimulationPanel(viewModel: ChildDetailViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "ladybug.fill")
+                    .foregroundStyle(Color.nafasPrimary)
+                Text("Developer Simulation")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color.nafasTextPrimary)
+            }
+            .padding(.horizontal, 20)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    // Inside adminSimulationPanel extension in ChildDetailView.swift
+                    HStack(spacing: 12) {
+                        simulationButton(title: "High Risk", icon: "exclamationmark.triangle.fill", color: .nafasDanger) {
+                            viewModel.runSimulation(scenario: .highRisk)
+                        }
+                        
+                        simulationButton(title: "Moderate Risk", icon: "exclamationmark.circle.fill", color: .nafasWarning) {
+                            viewModel.runSimulation(scenario: .moderateRisk)
+                        }
+                        
+                        simulationButton(title: "Low Risk", icon: "info.circle.fill", color: .nafasSuccess) {
+                            viewModel.runSimulation(scenario: .lowRisk)
+                        }
+                        
+                        simulationButton(title: "Dusty / Smoke", icon: "smoke.fill", color: .gray) {
+                            viewModel.runSimulation(scenario: .dustyEnvironment)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+        }
+        .padding(.vertical, 16)
+        // Clean, minimal background separating it from user content
+        .background(Color.nafasPrimary.opacity(0.05))
+    }
+    
+    @ViewBuilder
+    private func simulationButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundStyle(color)
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.nafasTextPrimary)
+            }
+            .frame(width: 100, height: 80)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.nafasSurface.opacity(0.8)) // Slight transparency for a minimal look
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(color.opacity(0.3), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+        }
+    }
+}
+// ---------------------------simulation

@@ -179,7 +179,8 @@ struct AddPeakFlowView: View {
                 value: intValue,
                 date: df.string(from: now),
                 time: tf.string(from: now),
-                note: note
+                note: note,
+                timestamp: now
             )
             store.addPeakFlow(childID: child.id.uuidString, entry: entry)
             isSaving = false

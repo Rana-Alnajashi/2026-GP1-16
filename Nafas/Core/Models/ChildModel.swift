@@ -1,6 +1,6 @@
 import Foundation
 import SwiftUI
-
+import FirebaseFirestore
 // MARK: - Child Model
 struct ChildModel: Identifiable, Codable, Equatable, Hashable {
     var id: UUID = UUID()
@@ -86,11 +86,12 @@ struct HistoryEntry: Identifiable {
 
 // MARK: - Peak Flow Entry
 struct PeakFlowEntry: Identifiable,Codable {
-    let id = UUID()
+    @DocumentID var id: String?
     var value: Int
     var date: String
     var time: String
     var note: String
+    @ServerTimestamp var timestamp: Date? 
 }
 
 // MARK: - Bluetooth Device Model
